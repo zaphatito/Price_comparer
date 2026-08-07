@@ -3,197 +3,222 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Price Comparator Web</title>
+    <title>Comparador de precios PDF | Price Comparator</title>
     <meta
       name="description"
-      content="Compara listas de precios PDF directamente en el navegador y descarga el Excel final."
+      content="Compara listas de precios de varios proveedores desde archivos PDF y descarga un Excel con las mejores opciones por producto."
     />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://zaphatito.github.io/Price_comparer/" />
+    <meta property="og:title" content="Comparador de precios PDF" />
+    <meta
+      property="og:description"
+      content="Compara listas de proveedores y encuentra los mejores precios por producto."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://zaphatito.github.io/Price_comparer/" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
+    <a class="skip-link" href="#main-content">Ir al contenido principal</a>
     <div class="page-shell">
-      <header class="hero">
-        <div class="hero-copy">
-          <p class="eyebrow">GitHub Pages Ready</p>
-          <h1>Price Comparator</h1>
-          <p class="hero-text">
-            Carga PDFs locales, aplica relaciones manuales y genera el mismo comparativo en Excel
-            sin backend. Todo corre en tu navegador.
-          </p>
-        </div>
-        <div class="hero-meta">
-          <div class="meta-card">
-            <span class="meta-label">Salida</span>
-            <strong>Descarga directa</strong>
-          </div>
-          <div class="meta-card">
-            <span class="meta-label">Relaciones</span>
-            <strong id="priorityStatus">Sin hoja cargada</strong>
-          </div>
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="Inicio del comparador de precios">
+          <span class="brand-mark" aria-hidden="true">PC</span>
+          <span>Comparador de precios</span>
+        </a>
+        <div class="privacy-note">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 3 5 6v5c0 4.6 2.9 8.8 7 10 4.1-1.2 7-5.4 7-10V6l-7-3Z" />
+            <path d="m9.5 12 1.7 1.7 3.7-4" />
+          </svg>
+          <span>Tus archivos permanecen en este dispositivo</span>
         </div>
       </header>
 
-      <main class="layout">
-        <section class="stack">
-          <section class="card upload-card">
-            <div class="card-head">
-              <div>
-                <p class="section-kicker">Entradas</p>
-                <h2>PDFs agregados</h2>
-              </div>
-              <button id="pickPdfBtn" class="button button-primary" type="button">Agregar PDFs</button>
-            </div>
+      <section class="intro">
+        <p class="intro-label">Simple, rápido y privado</p>
+        <h1>Encuentra el mejor precio sin revisar cada lista a mano.</h1>
+        <p>
+          Agrega los PDFs de tus proveedores y obtén un Excel con los productos comparados.
+        </p>
+      </section>
 
-            <button id="dropzone" class="dropzone" type="button">
-              <span class="dropzone-title">Suelta PDFs aquí o haz clic para seleccionarlos</span>
-              <span class="dropzone-subtitle">No se suben a ningún servidor.</span>
+      <main id="main-content" class="workspace" tabindex="-1">
+        <section class="card upload-card">
+          <div class="section-head">
+            <div class="section-title">
+              <span class="step-badge">1</span>
+              <div>
+                <h2>Agrega los listados</h2>
+                <p>Selecciona uno o más archivos PDF.</p>
+              </div>
+            </div>
+            <button id="pickPdfBtn" class="button button-primary" type="button">
+              Seleccionar PDFs
             </button>
+          </div>
 
-            <div class="toolbar">
-              <button id="removeSelectedBtn" class="button" type="button">Quitar seleccionados</button>
-              <button id="clearListBtn" class="button" type="button">Limpiar lista</button>
-              <button id="downloadRelationsBtn" class="button" type="button">Descargar relaciones</button>
-              <button id="uploadRelationsBtn" class="button" type="button">Cargar relaciones</button>
+          <button id="dropzone" class="dropzone" type="button">
+            <span class="upload-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5" />
+                <path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" />
+              </svg>
+            </span>
+            <span class="dropzone-title">Arrastra tus PDFs aquí</span>
+            <span class="dropzone-subtitle">o haz clic para buscarlos en tu equipo</span>
+          </button>
+
+          <div class="list-actions">
+            <div class="selection-actions">
+              <button id="removeSelectedBtn" class="button button-secondary" type="button">
+                Quitar seleccionados
+              </button>
+              <button id="clearListBtn" class="button button-text" type="button">Vaciar lista</button>
             </div>
+          </div>
 
-            <div class="table-wrap">
-              <table class="listings-table">
-                <thead>
-                  <tr>
-                    <th class="checkbox-col">
-                      <input id="selectAllRows" type="checkbox" aria-label="Seleccionar todo" />
-                    </th>
-                    <th>Proveedor</th>
-                    <th>Archivo</th>
-                    <th>Tamaño</th>
-                  </tr>
-                </thead>
-                <tbody id="listingRows">
-                  <tr class="empty-row">
-                    <td colspan="4">No hay PDFs agregados todavía.</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
+          <div class="table-wrap listings-wrap">
+            <table class="listings-table">
+              <thead>
+                <tr>
+                  <th class="checkbox-col">
+                    <input id="selectAllRows" type="checkbox" aria-label="Seleccionar todo" />
+                  </th>
+                  <th>Proveedor</th>
+                  <th>Archivo</th>
+                  <th>Tamaño</th>
+                </tr>
+              </thead>
+              <tbody id="listingRows">
+                <tr class="empty-row">
+                  <td colspan="4">Aún no has agregado archivos.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-          <section class="card output-card">
-            <div class="card-head">
+          <div class="optional-tools">
+            <div class="optional-copy">
+              <span class="optional-label">Opcional</span>
               <div>
-                <p class="section-kicker">Proceso</p>
-                <h2>Generación</h2>
+                <strong>Equivalencias personalizadas</strong>
+                <p>Úsalas si un mismo producto aparece con nombres diferentes.</p>
               </div>
             </div>
-
-            <div class="form-grid">
-              <label class="field">
-                <span>Nombre del archivo Excel</span>
-                <input id="outputFileInput" type="text" value="price_comparison.xlsx" />
-              </label>
-              <div class="field field-static">
-                <span>Destino</span>
-                <strong>Descargas del navegador</strong>
-              </div>
-            </div>
-
-            <div class="progress-head">
-              <span id="progressLabel">Progreso: 0/0</span>
-              <span id="summaryLabel">Sin resultados</span>
-            </div>
-            <progress id="progressBar" max="1" value="0"></progress>
-
-            <div class="cta-row">
-              <button id="generateBtn" class="button button-primary button-wide" type="button">
-                Generar comparación
+            <div class="relations-actions">
+              <span id="priorityStatus" class="status-badge">Sin equivalencias</span>
+              <button id="uploadRelationsBtn" class="button button-secondary" type="button">
+                Cargar equivalencias
+              </button>
+              <button id="downloadRelationsBtn" class="button button-text" type="button">
+                Descargar plantilla
               </button>
             </div>
-          </section>
-
-          <section class="card log-card">
-            <div class="card-head">
-              <div>
-                <p class="section-kicker">Actividad</p>
-                <h2>Registro</h2>
-              </div>
-              <button id="clearLogBtn" class="button button-ghost" type="button">Limpiar log</button>
-            </div>
-            <div id="logOutput" class="log-output" aria-live="polite"></div>
-          </section>
+          </div>
         </section>
 
-        <aside class="stack">
-          <section class="card status-card">
-            <div class="card-head">
+        <aside class="side-stack">
+          <section class="card generate-card">
+            <div class="section-title">
+              <span class="step-badge">2</span>
               <div>
-                <p class="section-kicker">Estado</p>
-                <h2>Memoria local</h2>
+                <h2>Genera el comparativo</h2>
+                <p>Revisa el nombre y comienza.</p>
               </div>
             </div>
-            <div class="status-grid">
-              <div class="status-item">
-                <span class="status-label">Relaciones prioritarias</span>
-                <strong id="priorityRowsLabel">0 filas</strong>
-              </div>
-              <div class="status-item">
-                <span class="status-label">Cache del último resultado</span>
-                <strong id="cachedRunsLabel">0 firmas</strong>
-              </div>
-              <div class="status-item">
-                <span class="status-label">Modo</span>
-                <strong>100% cliente</strong>
-              </div>
+
+            <label class="field">
+              <span>Nombre del archivo</span>
+              <input id="outputFileInput" type="text" value="price_comparison.xlsx" />
+              <small>Se guardará en tu carpeta de descargas.</small>
+            </label>
+
+            <div class="progress-copy">
+              <span id="progressLabel">Listo para comenzar</span>
+              <strong id="summaryLabel" role="status" aria-live="polite" aria-atomic="true">
+                Sin resultados
+              </strong>
             </div>
+            <progress id="progressBar" max="1" value="0" aria-labelledby="progressLabel"></progress>
+
+            <button id="generateBtn" class="button button-primary button-large" type="button">
+              Generar comparativo
+            </button>
           </section>
 
-          <section id="resultsCard" class="card results-card hidden">
-            <div class="card-head">
-              <div>
-                <p class="section-kicker">Resultado</p>
-                <h2>Vista previa</h2>
+          <details class="activity-details">
+            <summary>
+              <span>Detalles del proceso</span>
+              <small>Ábrelo solo si necesitas revisar un error</small>
+            </summary>
+            <div class="activity-content">
+              <div class="activity-head">
+                <span>Actividad reciente</span>
+                <button id="clearLogBtn" class="button button-text button-small" type="button">
+                  Limpiar
+                </button>
               </div>
+              <div id="logOutput" class="log-output" aria-live="polite"></div>
             </div>
-
-            <div class="result-block">
-              <h3>Ranking</h3>
-              <div class="table-wrap">
-                <table class="preview-table">
-                  <thead>
-                    <tr>
-                      <th>Tienda</th>
-                      <th>Productos con mejor precio</th>
-                    </tr>
-                  </thead>
-                  <tbody id="rankingRows"></tbody>
-                </table>
-              </div>
-            </div>
-
-            <div class="result-block">
-              <div class="card-head compact-head">
-                <h3>Comparativo</h3>
-                <input
-                  id="resultSearch"
-                  class="search-input"
-                  type="search"
-                  placeholder="Filtrar productos"
-                />
-              </div>
-              <div class="table-wrap wide-scroll">
-                <table class="preview-table">
-                  <thead id="comparisonHead"></thead>
-                  <tbody id="comparisonRows"></tbody>
-                </table>
-              </div>
-            </div>
-          </section>
+          </details>
         </aside>
       </main>
+
+      <section id="resultsCard" class="card results-card hidden">
+        <div class="section-head results-head">
+          <div class="section-title">
+            <span class="step-badge step-success">3</span>
+            <div>
+              <h2>Resultado</h2>
+              <p>Consulta los mejores precios antes de abrir el Excel.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="results-grid">
+          <div class="result-block ranking-block">
+            <h3>Mejores precios por proveedor</h3>
+            <div class="table-wrap">
+              <table class="preview-table">
+                <thead>
+                  <tr>
+                    <th>Proveedor</th>
+                    <th>Mejores precios</th>
+                  </tr>
+                </thead>
+                <tbody id="rankingRows"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="result-block comparison-block">
+            <div class="result-toolbar">
+              <h3>Comparación por producto</h3>
+              <input
+                id="resultSearch"
+                class="search-input"
+                type="search"
+                placeholder="Buscar producto"
+                aria-label="Buscar producto"
+              />
+            </div>
+            <div class="table-wrap wide-scroll">
+              <table class="preview-table">
+                <thead id="comparisonHead"></thead>
+                <tbody id="comparisonRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
 
     <input id="pdfInput" type="file" accept=".pdf,application/pdf" multiple hidden />

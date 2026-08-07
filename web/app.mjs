@@ -51,8 +51,6 @@ const elements = {
   progressBar: document.getElementById("progressBar"),
   logOutput: document.getElementById("logOutput"),
   priorityStatus: document.getElementById("priorityStatus"),
-  priorityRowsLabel: document.getElementById("priorityRowsLabel"),
-  cachedRunsLabel: document.getElementById("cachedRunsLabel"),
   summaryLabel: document.getElementById("summaryLabel"),
   resultsCard: document.getElementById("resultsCard"),
   rankingRows: document.getElementById("rankingRows"),
@@ -118,7 +116,8 @@ function setProgress(done, total) {
   const safeTotal = Math.max(total, 1);
   elements.progressBar.max = safeTotal;
   elements.progressBar.value = Math.min(done, safeTotal);
-  elements.progressLabel.textContent = `Progreso: ${done}/${total}`;
+  elements.progressLabel.textContent =
+    total > 0 ? `${done} de ${total} archivos procesados` : "Listo para comenzar";
 }
 
 function setBusy(isBusy) {
@@ -137,16 +136,18 @@ function setBusy(isBusy) {
     element.disabled = disabled;
   });
   elements.selectAllRows.disabled = disabled || state.fileEntries.length === 0;
+  elements.generateBtn.textContent = isBusy
+    ? "Preparando comparativo..."
+    : "Generar comparativo";
 }
 
 function updateStorageStatus() {
   const priorityCount = state.priorityStandardRows.length;
-  const cachedCount = Object.keys(state.cachedStandardRowsBySignature).length;
-
   elements.priorityStatus.textContent =
-    priorityCount > 0 ? `${priorityCount} filas disponibles` : "Sin hoja cargada";
-  elements.priorityRowsLabel.textContent = `${priorityCount} fila${priorityCount === 1 ? "" : "s"}`;
-  elements.cachedRunsLabel.textContent = `${cachedCount} firma${cachedCount === 1 ? "" : "s"}`;
+    priorityCount > 0
+      ? `${priorityCount} equivalencia${priorityCount === 1 ? "" : "s"}`
+      : "Sin equivalencias";
+  elements.priorityStatus.classList.toggle("has-data", priorityCount > 0);
 }
 
 function savePriorityRelations() {
@@ -185,7 +186,7 @@ function renderListings() {
   if (state.fileEntries.length === 0) {
     const row = document.createElement("tr");
     row.className = "empty-row";
-    row.innerHTML = '<td colspan="4">No hay PDFs agregados todavía.</td>';
+    row.innerHTML = '<td colspan="4">Aún no has agregado archivos.</td>';
     elements.listingRows.append(row);
     elements.selectAllRows.checked = false;
     elements.selectAllRows.disabled = true;
@@ -200,6 +201,7 @@ function renderListings() {
     checkboxCell.className = "checkbox-col";
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
+    checkbox.setAttribute("aria-label", `Seleccionar ${entry.file.name}`);
     checkbox.checked = Boolean(entry.selected);
     checkbox.addEventListener("change", () => {
       entry.selected = checkbox.checked;
@@ -283,7 +285,9 @@ function addFiles(fileList) {
 
   renderListings();
   if (added > 0 || skipped > 0) {
-    logLine(`PDFs agregados: ${added} | omitidos: ${skipped}`);
+    logLine(`${added} PDF${added === 1 ? " agregado" : "s agregados"}${
+      skipped > 0 ? ` · ${skipped} omitido${skipped === 1 ? "" : "s"}` : ""
+    }.`);
   }
 }
 
@@ -293,7 +297,7 @@ function removeSelectedRows() {
   const removed = before - state.fileEntries.length;
   renderListings();
   if (removed > 0) {
-    logLine(`Filas eliminadas: ${removed}`);
+    logLine(`${removed} archivo${removed === 1 ? " retirado" : "s retirados"}.`);
   }
 }
 
@@ -303,7 +307,7 @@ function clearRows() {
   }
   state.fileEntries = [];
   renderListings();
-  logLine("Lista limpiada.");
+  logLine("Se vació la lista de archivos.");
 }
 
 function collectNamedEntries() {
@@ -643,14 +647,14 @@ function loadPrioritizedManualRows(storeColumns, signature) {
   if (state.priorityStandardRows.length > 0) {
     const priorityRows = relationsSheetRowsToManualRows(state.priorityStandardRows, storeColumns);
     merged.push(...priorityRows);
-    logLine(`[INFO] Relaciones prioritarias cargadas: ${priorityRows.length} fila(s)`);
+    logLine(`${priorityRows.length} equivalencias guardadas disponibles.`);
   }
 
   const cachedStandardRows = state.cachedStandardRowsBySignature[signature];
   if (Array.isArray(cachedStandardRows) && cachedStandardRows.length > 0) {
     const cachedRows = relationsSheetRowsToManualRows(cachedStandardRows, storeColumns);
     merged.push(...cachedRows);
-    logLine(`[INFO] Relaciones recuperadas del último resultado: ${cachedRows.length} fila(s)`);
+    logLine(`${cachedRows.length} equivalencias recuperadas del comparativo anterior.`);
   }
 
   return deduplicateManualRows(merged);
@@ -679,9 +683,7 @@ async function handleRelationsUpload(file) {
   state.priorityStandardRows = manualRowsToStandardRows(manualRows, storeColumns);
   savePriorityRelations();
 
-  logLine(
-    `[INFO] Hoja de relaciones cargada: ${file.name} (${state.priorityStandardRows.length} fila(s))`,
-  );
+  logLine(`Equivalencias cargadas desde ${file.name}: ${state.priorityStandardRows.length}.`);
 }
 
 async function runComparison({ relationsOnly = false } = {}) {
@@ -699,14 +701,13 @@ async function runComparison({ relationsOnly = false } = {}) {
 
   setBusy(true);
   setProgress(0, namedEntries.length);
-  setSummary("Procesando PDFs...");
-  logLine("------------------------------------------------");
-  logLine(`[INFO] Iniciando comparación de ${namedEntries.length} listado(s).`);
+  setSummary("Procesando archivos...");
+  logLine(`Procesando ${namedEntries.length} listado${namedEntries.length === 1 ? "" : "s"}.`);
 
   try {
     const manualRows = loadPrioritizedManualRows(storeColumns, signature);
     if (manualRows.length > 0) {
-      logLine(`[INFO] Overrides manuales aplicados: ${manualRows.length} fila(s)`);
+      logLine(`Aplicando ${manualRows.length} equivalencias personalizadas.`);
     }
 
     const framesByStore = {};
@@ -716,15 +717,15 @@ async function runComparison({ relationsOnly = false } = {}) {
         const { pages, previewText } = await extractPdfPages(file);
         const detectedProvider =
           detectProviderNameFromText(file.name) ?? detectProviderNameFromText(previewText);
-        const { items, sourceFormat } = parseListingPdfPages(pages);
+        const { items } = parseListingPdfPages(pages);
         framesByStore[storeName] = items;
         logLine(
-          `[OK] ${storeName}: ${file.name} (${items.length} productos, formato: ${sourceFormat}${
-            detectedProvider ? `, detectado: ${detectedProvider}` : ""
-          })`,
+          `Listo: ${file.name} · ${items.length} productos${
+            detectedProvider ? ` · ${detectedProvider}` : ""
+          }`,
         );
       } catch (error) {
-        logLine(`[ERROR] ${file.name}: ${error.message}`);
+        logLine(`No se pudo procesar ${file.name}: ${error.message}`);
       } finally {
         setProgress(index + 1, namedEntries.length);
       }
@@ -734,7 +735,7 @@ async function runComparison({ relationsOnly = false } = {}) {
       throw new Error("Ningún PDF válido pudo ser procesado.");
     }
 
-    logLine("[INFO] Emparejando productos con similitud difusa...");
+    logLine("Comparando productos equivalentes...");
     const bundle = buildComparisonBundle(framesByStore, manualRows);
     const rankingRows = buildRankingRows(bundle.comparisonRows, bundle.storeColumns);
     const standardRelationsRows = relationsRowsToStandard(bundle.relationsRows, bundle.storeColumns);
@@ -752,8 +753,8 @@ async function runComparison({ relationsOnly = false } = {}) {
 
     if (relationsOnly) {
       await exportRelationsWorkbook(standardRelationsRows, "relations.xlsx");
-      logLine("[OK] Hoja de relaciones exportada.");
-      setSummary(`Relaciones listas: ${standardRelationsRows.length} fila(s)`);
+      logLine("Plantilla de equivalencias descargada.");
+      setSummary(`${standardRelationsRows.length} equivalencias listas`);
     } else {
       const filename = ensureOutputFilename(elements.outputFileInput.value);
       await exportComparisonWorkbook(
@@ -763,13 +764,17 @@ async function runComparison({ relationsOnly = false } = {}) {
         standardRelationsRows,
         filename,
       );
-      logLine(`[OK] Excel generado: ${filename}`);
-      setSummary(`Tiendas: ${bundle.storeColumns.length} | Productos: ${bundle.comparisonRows.length}`);
+      logLine(`Excel descargado: ${filename}`);
+      setSummary(
+        `${bundle.storeColumns.length} proveedor${bundle.storeColumns.length === 1 ? "" : "es"} · ${
+          bundle.comparisonRows.length
+        } productos`,
+      );
     }
   } catch (error) {
-    logLine(`[ERROR] ${error.message}`);
+    logLine(`No se pudo completar: ${error.message}`);
     window.alert(error.message);
-    setSummary("Proceso con errores");
+    setSummary("No se pudo completar");
   } finally {
     setBusy(false);
   }
@@ -778,7 +783,7 @@ async function runComparison({ relationsOnly = false } = {}) {
 async function handleDownloadRelations() {
   if (state.fileEntries.length === 0) {
     await exportRelationsWorkbook(state.priorityStandardRows, "relations.xlsx");
-    logLine("[OK] Hoja de relaciones exportada.");
+    logLine("Plantilla de equivalencias descargada.");
     return;
   }
   await runComparison({ relationsOnly: true });
@@ -830,7 +835,7 @@ function bindEvents() {
     try {
       await handleRelationsUpload(file);
     } catch (error) {
-      logLine(`[ERROR] ${error.message}`);
+      logLine(`No se pudieron cargar las equivalencias: ${error.message}`);
       window.alert(error.message);
     }
   });
@@ -850,17 +855,15 @@ async function init() {
   renderListings();
   setBusy(false);
   setProgress(0, 0);
-  setSummary("Sin resultados");
+  setSummary("Aún no hay resultados");
   bindEvents();
   elements.outputFileInput.value = DEFAULT_OUTPUT_FILE;
-  logLine("[INFO] Aplicación lista. Los archivos se procesan localmente en el navegador.");
 
   ensureLibraries()
-    .then(() => {
-      logLine("[INFO] Librerías cliente preparadas.");
-    })
+    .then(() => {})
     .catch((error) => {
-      logLine(`[ERROR] No se pudieron cargar las librerías del navegador: ${error.message}`);
+      logLine(`No se pudo iniciar el lector de archivos: ${error.message}`);
+      setSummary("No se pudo iniciar");
     });
 }
 
