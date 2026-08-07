@@ -18,6 +18,7 @@ import {
   relationsSheetRowsToManualRows,
   rgbGradientGreenWhite,
 } from "./core.mjs";
+import pdfWorkerUrl from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
 
 const STORAGE_KEYS = {
   priorityRelations: "price-comparer.priority-relations.v1",
@@ -68,11 +69,14 @@ async function ensureLibraries() {
       import("pdfjs-dist/legacy/build/pdf.mjs"),
       import("xlsx"),
       import("exceljs"),
-    ]).then(([pdfjsModule, xlsxModule, excelJsModule]) => ({
-      pdfjsLib: pdfjsModule,
-      XLSX: xlsxModule,
-      ExcelJS: excelJsModule.default ?? excelJsModule,
-    }));
+    ]).then(([pdfjsModule, xlsxModule, excelJsModule]) => {
+      pdfjsModule.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+      return {
+        pdfjsLib: pdfjsModule,
+        XLSX: xlsxModule,
+        ExcelJS: excelJsModule.default ?? excelJsModule,
+      };
+    });
   }
 
   return libraryPromise;
@@ -488,7 +492,6 @@ async function extractPdfPages(file) {
   const data = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({
     data,
-    disableWorker: true,
     useSystemFonts: true,
   }).promise;
 
