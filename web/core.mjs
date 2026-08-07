@@ -322,7 +322,7 @@ function detectHeaderAnchors(line) {
 
 function extractTrailingPrice(text) {
   const match = cleanText(text).match(
-    /\$?(\d{1,5}(?:,\d{3})*(?:\.\d+)?)\s*(?:CS|EA|LB|CT|PK|BX|BG|RL|DZ)\s*$/i,
+    /\$?(\d{1,5}(?:,\d{3})*(?:\.\d+)?)\s*\/?\s*(?:CS|EA|LB|CT|PK|BX|BG|RL|DZ)\s*$/i,
   );
   if (!match) {
     return Number.NaN;
@@ -375,7 +375,7 @@ function groupParsedRecords(records) {
     const productName = cleanText(record.product_name);
     const price = Number(record.price);
     const productKey = normalizeKey(productName);
-    if (!productName || !productKey || Number.isNaN(price)) {
+    if (!productName || !productKey || !Number.isFinite(price) || price <= 0) {
       continue;
     }
     valid.push({ product_key: productKey, product_name: productName, price });
@@ -402,50 +402,183 @@ function groupParsedRecords(records) {
   return [...grouped.values()];
 }
 
+function isProductHeader(text) {
+  const normalized = normalizeKey(text);
+  return (
+    normalized.includes("product description")
+    || normalized.includes("product name")
+    || normalized === "description"
+    || normalized === "item description"
+  );
+}
+
+function isPriceHeader(text) {
+  const normalized = normalizeKey(text);
+  return normalized.includes("price") || normalized.includes("cost");
+}
+
+function findTabularHeader(lines, pageHeight) {
+  const searchLimit = Number.isFinite(pageHeight) ? pageHeight * 0.48 : Number.POSITIVE_INFINITY;
+  const productCandidates = [];
+  const priceCandidates = [];
+
+  lines.forEach((line, lineIndex) => {
+    if (line.y > searchLimit) {
+      return;
+    }
+    line.items.forEach((item) => {
+      if (isProductHeader(item.text)) {
+        productCandidates.push({ ...item, y: line.y, lineIndex });
+      }
+      if (isPriceHeader(item.text)) {
+        priceCandidates.push({ ...item, y: line.y, lineIndex });
+      }
+    });
+  });
+
+  let bestPair = null;
+  for (const product of productCandidates) {
+    for (const price of priceCandidates) {
+      const verticalDistance = Math.abs(product.y - price.y);
+      if (product.x >= price.x || verticalDistance > 32) {
+        continue;
+      }
+      const score = verticalDistance + Math.abs(product.lineIndex - price.lineIndex) * 3;
+      if (!bestPair || score < bestPair.score) {
+        bestPair = { product, price, score };
+      }
+    }
+  }
+
+  if (!bestPair) {
+    return null;
+  }
+
+  const centerY = (bestPair.product.y + bestPair.price.y) / 2;
+  const headerItems = lines
+    .filter((line) => Math.abs(line.y - centerY) <= 28)
+    .flatMap((line) => line.items.map((item) => ({ ...item, y: line.y })));
+  const previous = headerItems
+    .filter((item) => item.endX < bestPair.product.x)
+    .sort((left, right) => right.endX - left.endX)[0];
+  const next = headerItems
+    .filter((item) => item.x > bestPair.product.endX + 8)
+    .sort((left, right) => left.x - right.x)[0];
+  const afterPrice = headerItems
+    .filter((item) => item.x > bestPair.price.endX + 8)
+    .sort((left, right) => left.x - right.x)[0];
+
+  return {
+    headerBottom: Math.max(...headerItems.map((item) => item.y)) + 4,
+    productStart: previous ? previous.endX + 4 : Math.max(0, bestPair.product.x - 40),
+    productEnd: next ? (bestPair.product.endX + next.x) / 2 : bestPair.price.x - 24,
+    priceStart: bestPair.price.x - 32,
+    priceEnd: afterPrice ? afterPrice.x - 6 : Number.POSITIVE_INFINITY,
+  };
+}
+
+function parsePriceCandidate(text) {
+  const cleaned = cleanText(text).replaceAll(",", "");
+  const unitMatch = cleaned.match(
+    /\$?\s*(-?\d{1,5}(?:\.\d+)?)\s*\/?\s*(CS|EA|LB|CT|PK|BX|BG|RL|DZ)\b/i,
+  );
+  if (unitMatch) {
+    return { price: Number.parseFloat(unitMatch[1]), unit: unitMatch[2].toUpperCase() };
+  }
+
+  const currencyMatch = cleaned.match(/\$\s*(-?\d{1,5}(?:\.\d+)?)/);
+  if (currencyMatch) {
+    return { price: Number.parseFloat(currencyMatch[1]), unit: "" };
+  }
+
+  const plainMatch = cleaned.match(/^\s*(-?\d{1,5}(?:\.\d+)?)\s*$/);
+  if (plainMatch) {
+    return { price: Number.parseFloat(plainMatch[1]), unit: "" };
+  }
+  return null;
+}
+
+function median(values) {
+  if (values.length === 0) {
+    return 0;
+  }
+  const sorted = [...values].sort((left, right) => left - right);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? (sorted[middle - 1] + sorted[middle]) / 2
+    : sorted[middle];
+}
+
+function preferCasePrices(records) {
+  const grouped = new Map();
+  for (const record of records) {
+    const key = normalizeKey(record.product_name);
+    const current = grouped.get(key);
+    const isCase = record.price_unit === "CS";
+    const currentIsCase = current?.price_unit === "CS";
+    if (!current || (isCase && !currentIsCase) || (isCase === currentIsCase && record.price < current.price)) {
+      grouped.set(key, record);
+    }
+  }
+  return [...grouped.values()];
+}
+
 function parseTabularCandidateRows(pages) {
   const records = [];
 
   for (const page of pages) {
     const lines = page.lines ?? [];
-    const headerIndex = findHeaderLineIndex(lines);
-    if (headerIndex === null) {
+    const header = findTabularHeader(lines, page.height);
+    if (!header) {
       continue;
     }
 
-    const anchors = detectHeaderAnchors(lines[headerIndex]);
-    if (!anchors) {
-      continue;
-    }
-
-    const headerText = normalizeKey(lines[headerIndex].text);
-    for (const line of lines.slice(headerIndex + 1)) {
-      const normalizedLine = normalizeKey(line.text);
-      if (!normalizedLine || normalizedLine === headerText) {
-        continue;
+    const dataLines = lines.filter((line) => line.y > header.headerBottom);
+    const priceRows = [];
+    for (const line of dataLines) {
+      const priceText = line.items
+        .filter((item) => item.x >= header.priceStart && item.x < header.priceEnd)
+        .map((item) => item.text)
+        .join(" ");
+      const parsedPrice = parsePriceCandidate(priceText);
+      if (parsedPrice && Number.isFinite(parsedPrice.price) && parsedPrice.price > 0) {
+        priceRows.push({ ...parsedPrice, y: line.y });
       }
+    }
 
-      const productParts = line.items
-        .filter((item) => item.x >= anchors.productX - 8 && item.x < anchors.priceX - 8)
-        .map((item) => item.text);
-      const priceParts = line.items
-        .filter((item) => item.x >= anchors.priceX - 12)
-        .map((item) => item.text);
+    const rowGaps = [];
+    for (let index = 1; index < priceRows.length; index += 1) {
+      const gap = priceRows[index].y - priceRows[index - 1].y;
+      if (gap > 4) {
+        rowGaps.push(gap);
+      }
+    }
+    const typicalGap = median(rowGaps.filter((gap) => gap >= median(rowGaps)));
+    const rowWindow = Math.min(24, Math.max(6, typicalGap * 0.45 || 12));
 
+    for (const priceRow of priceRows) {
+      const productParts = dataLines
+        .filter((line) => Math.abs(line.y - priceRow.y) <= rowWindow)
+        .flatMap((line) =>
+          line.items
+            .filter((item) => item.x >= header.productStart && item.x < header.productEnd)
+            .map((item) => ({ text: item.text, x: item.x, y: line.y })),
+        )
+        .sort((left, right) => left.y - right.y || left.x - right.x)
+        .map((item) => item.text);
       const productName = cleanText(productParts.join(" "));
-      let price = extractTrailingPrice(priceParts.join(" "));
-      if (Number.isNaN(price)) {
-        price = extractTrailingPrice(line.text);
-      }
-
-      if (!productName || Number.isNaN(price)) {
+      if (!productName) {
         continue;
       }
-
-      records.push({ product_name: productName, price });
+      records.push({
+        product_name: productName,
+        price: priceRow.price,
+        price_unit: priceRow.unit,
+      });
     }
   }
 
-  return groupParsedRecords(records);
+  return groupParsedRecords(preferCasePrices(records));
 }
 
 function parseSingleColumnCandidateRows(pages) {
@@ -665,7 +798,9 @@ function buildStoreCatalog(framesByStore) {
         product_name: cleanText(item.product_name),
         price: Number(item.price),
       }))
-      .filter((item) => item.product_key && item.product_name && Number.isFinite(item.price));
+      .filter(
+        (item) => item.product_key && item.product_name && Number.isFinite(item.price) && item.price > 0,
+      );
 
     valid.sort((left, right) => {
       const keyCmp = left.product_key.localeCompare(right.product_key);
@@ -1014,7 +1149,13 @@ function buildRankingRows(comparisonRows, storeColumns) {
     const prices = {};
     for (const storeName of storeColumns) {
       const value = row[storeName];
-      if (value === null || value === undefined || Number.isNaN(Number(value))) {
+      if (
+        value === null
+        || value === undefined
+        || value === ""
+        || !Number.isFinite(Number(value))
+        || Number(value) <= 0
+      ) {
         continue;
       }
       prices[storeName] = Number(value);
