@@ -96,6 +96,20 @@ function formatBytes(bytes) {
   return `${value.toFixed(index === 0 ? 0 : 1)} ${units[index]}`;
 }
 
+function readBlobAsArrayBuffer(blob) {
+  if (typeof blob.arrayBuffer === "function") {
+    return blob.arrayBuffer();
+  }
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error ?? new Error("The file could not be read."));
+    reader.onabort = () => reject(new Error("The file read was cancelled."));
+    reader.readAsArrayBuffer(blob);
+  });
+}
+
 function logLine(message) {
   const timestamp = new Date().toLocaleTimeString("en-US", {
     hour: "2-digit",
@@ -489,7 +503,7 @@ function groupTextItemsIntoLines(items, viewport, pdfjsLib) {
 
 async function extractPdfPages(file) {
   const { pdfjsLib } = await ensureLibraries();
-  const data = await file.arrayBuffer();
+  const data = await readBlobAsArrayBuffer(file);
   const pdf = await pdfjsLib.getDocument({
     data,
     useSystemFonts: true,
