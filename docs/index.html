@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Price Comparator Web</title>
+    <meta
+      name="description"
+      content="Compara listas de precios PDF directamente en el navegador y descarga el Excel final."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <script type="module" crossorigin src="./assets/index-bJnPdjdk.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/chunk-DHx0Hwia.js">
+    <link rel="modulepreload" crossorigin href="./assets/preload-helper-2ej06EnG.js">
+    <link rel="stylesheet" crossorigin href="./assets/index-DcXkNuw-.css">
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">GitHub Pages Ready</p>
+          <h1>Price Comparator</h1>
+          <p class="hero-text">
+            Carga PDFs locales, aplica relaciones manuales y genera el mismo comparativo en Excel
+            sin backend. Todo corre en tu navegador.
+          </p>
+        </div>
+        <div class="hero-meta">
+          <div class="meta-card">
+            <span class="meta-label">Salida</span>
+            <strong>Descarga directa</strong>
+          </div>
+          <div class="meta-card">
+            <span class="meta-label">Relaciones</span>
+            <strong id="priorityStatus">Sin hoja cargada</strong>
+          </div>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="stack">
+          <section class="card upload-card">
+            <div class="card-head">
+              <div>
+                <p class="section-kicker">Entradas</p>
+                <h2>PDFs agregados</h2>
+              </div>
+              <button id="pickPdfBtn" class="button button-primary" type="button">Agregar PDFs</button>
+            </div>
+
+            <button id="dropzone" class="dropzone" type="button">
+              <span class="dropzone-title">Suelta PDFs aquí o haz clic para seleccionarlos</span>
+              <span class="dropzone-subtitle">No se suben a ningún servidor.</span>
+            </button>
+
+            <div class="toolbar">
+              <button id="removeSelectedBtn" class="button" type="button">Quitar seleccionados</button>
+              <button id="clearListBtn" class="button" type="button">Limpiar lista</button>
+              <button id="downloadRelationsBtn" class="button" type="button">Descargar relaciones</button>
+              <button id="uploadRelationsBtn" class="button" type="button">Cargar relaciones</button>
+            </div>
+
+            <div class="table-wrap">
+              <table class="listings-table">
+                <thead>
+                  <tr>
+                    <th class="checkbox-col">
+                      <input id="selectAllRows" type="checkbox" aria-label="Seleccionar todo" />
+                    </th>
+                    <th>Proveedor</th>
+                    <th>Archivo</th>
+                    <th>Tamaño</th>
+                  </tr>
+                </thead>
+                <tbody id="listingRows">
+                  <tr class="empty-row">
+                    <td colspan="4">No hay PDFs agregados todavía.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="card output-card">
+            <div class="card-head">
+              <div>
+                <p class="section-kicker">Proceso</p>
+                <h2>Generación</h2>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <label class="field">
+                <span>Nombre del archivo Excel</span>
+                <input id="outputFileInput" type="text" value="price_comparison.xlsx" />
+              </label>
+              <div class="field field-static">
+                <span>Destino</span>
+                <strong>Descargas del navegador</strong>
+              </div>
+            </div>
+
+            <div class="progress-head">
+              <span id="progressLabel">Progreso: 0/0</span>
+              <span id="summaryLabel">Sin resultados</span>
+            </div>
+            <progress id="progressBar" max="1" value="0"></progress>
+
+            <div class="cta-row">
+              <button id="generateBtn" class="button button-primary button-wide" type="button">
+                Generar comparación
+              </button>
+            </div>
+          </section>
+
+          <section class="card log-card">
+            <div class="card-head">
+              <div>
+                <p class="section-kicker">Actividad</p>
+                <h2>Registro</h2>
+              </div>
+              <button id="clearLogBtn" class="button button-ghost" type="button">Limpiar log</button>
+            </div>
+            <div id="logOutput" class="log-output" aria-live="polite"></div>
+          </section>
+        </section>
+
+        <aside class="stack">
+          <section class="card status-card">
+            <div class="card-head">
+              <div>
+                <p class="section-kicker">Estado</p>
+                <h2>Memoria local</h2>
+              </div>
+            </div>
+            <div class="status-grid">
+              <div class="status-item">
+                <span class="status-label">Relaciones prioritarias</span>
+                <strong id="priorityRowsLabel">0 filas</strong>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Cache del último resultado</span>
+                <strong id="cachedRunsLabel">0 firmas</strong>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Modo</span>
+                <strong>100% cliente</strong>
+              </div>
+            </div>
+          </section>
+
+          <section id="resultsCard" class="card results-card hidden">
+            <div class="card-head">
+              <div>
+                <p class="section-kicker">Resultado</p>
+                <h2>Vista previa</h2>
+              </div>
+            </div>
+
+            <div class="result-block">
+              <h3>Ranking</h3>
+              <div class="table-wrap">
+                <table class="preview-table">
+                  <thead>
+                    <tr>
+                      <th>Tienda</th>
+                      <th>Productos con mejor precio</th>
+                    </tr>
+                  </thead>
+                  <tbody id="rankingRows"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="result-block">
+              <div class="card-head compact-head">
+                <h3>Comparativo</h3>
+                <input
+                  id="resultSearch"
+                  class="search-input"
+                  type="search"
+                  placeholder="Filtrar productos"
+                />
+              </div>
+              <div class="table-wrap wide-scroll">
+                <table class="preview-table">
+                  <thead id="comparisonHead"></thead>
+                  <tbody id="comparisonRows"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </aside>
+      </main>
+    </div>
+
+    <input id="pdfInput" type="file" accept=".pdf,application/pdf" multiple hidden />
+    <input id="relationsInput" type="file" accept=".xlsx,.xlsm,.xls" hidden />
+
+  </body>
+</html>

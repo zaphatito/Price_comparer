@@ -1,0 +1,781 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ui version="4.0">
+ <class>PriceComparerWidget</class>
+ <widget class="QWidget" name="PriceComparerWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1060</width>
+    <height>1050</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>760</width>
+    <height>620</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>PDF Price Comparator</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget#PriceComparerWidget[themeMode="light"] {
+
+    background: #F4F7F5;
+    color: #1F2937;
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial;
+    font-size: 11pt;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QFrame#headerCard, QWidget#PriceComparerWidget[themeMode="light"] QFrame#actionsCard, QWidget#PriceComparerWidget[themeMode="light"] QFrame#tableCard, QWidget#PriceComparerWidget[themeMode="light"] QFrame#outputCard, QWidget#PriceComparerWidget[themeMode="light"] QFrame#logsCard {
+
+    background: #FFFFFF;
+    border: 1px solid #DFE8E2;
+    border-radius: 12px;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QLabel#titleLabel {
+
+    color: #0F172A;
+    font-size: 18pt;
+    font-weight: 700;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QLabel#subtitleLabel {
+
+    color: #51606F;
+    font-size: 10pt;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QLabel#outputDirLabel, QWidget#PriceComparerWidget[themeMode="light"] QLabel#outputFileLabel {
+
+    font-weight: 600;
+    color: #1D2A38;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QLabel#listingsLabel {
+
+    font-size: 14pt;
+    font-weight: 700;
+    color: #1D2A38;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QLabel#logLabel {
+
+    font-size: 10pt;
+    font-weight: 600;
+    color: #4B5B68;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QLabel#outputDirValueLabel {
+
+    color: #0B7A41;
+    font-weight: 600;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QPushButton {
+
+    background: #FFFFFF;
+    border: 1px solid #D2DDE1;
+    border-radius: 8px;
+    padding: 7px 14px;
+    color: #22303B;
+    font-size: 10pt;
+    font-weight: 600;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QPushButton:hover {
+
+    border: 1px solid #B8C8CF;
+    background: #F8FBF9;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QPushButton:pressed {
+
+    background: #EEF5F1;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QPushButton#convertBtn {
+
+    background: #2563EB;
+    border: 1px solid #2563EB;
+    color: #FFFFFF;
+    font-size: 11pt;
+    font-weight: 700;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QPushButton#convertBtn:hover {
+
+    background: #1D4ED8;
+    border: 1px solid #1D4ED8;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QPushButton#convertBtn:pressed {
+
+    background: #1E40AF;
+    border: 1px solid #1E40AF;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QLineEdit {
+
+    background: #FFFFFF;
+    border: 1px solid #D2DDE1;
+    border-radius: 8px;
+    padding: 7px 10px;
+    selection-background-color: #BDE7CF;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QLineEdit:focus {
+
+    border: 1px solid #0F8A4A;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QFrame#listingsTableContainer {
+
+    background: #F7FBF8;
+    border: 1px solid #D4E1DB;
+    border-radius: 16px;
+    padding: 8px;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QTableWidget#listingsTable {
+
+    background: #FFFFFF;
+    border: 1px solid #E2ECE6;
+    border-radius: 10px;
+    gridline-color: #ECF2EE;
+    alternate-background-color: #F8FBF9;
+    selection-background-color: #DEEAFE;
+    selection-color: #0F172A;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QTableWidget#listingsTable::item {
+
+    padding: 7px 8px;
+    border-bottom: 1px solid #ECF2EE;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QTableWidget#listingsTable::item:hover {
+
+    background: #F1F7FF;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QTableWidget#listingsTable::item:selected {
+
+    background: #DEEAFE;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QTableWidget#listingsTable QTableCornerButton::section {
+
+    background: #EEF4F0;
+    border: none;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QTableWidget#listingsTable QScrollBar:vertical {
+
+    background: #EEF4F0;
+    width: 10px;
+    margin: 2px;
+    border: none;
+    border-radius: 5px;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QTableWidget#listingsTable QScrollBar::handle:vertical {
+
+    background: #8EA4B1;
+    border-radius: 5px;
+    min-height: 24px;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QTableWidget#listingsTable QScrollBar::add-line:vertical, QWidget#PriceComparerWidget[themeMode="light"] QTableWidget#listingsTable QScrollBar::sub-line:vertical {
+
+    height: 0px;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QTableWidget#listingsTable QHeaderView::section {
+
+    background: #EEF4F0;
+    color: #2B3A46;
+    border: 0;
+    border-bottom: 1px solid #DCE5E0;
+    padding: 8px;
+    font-weight: 700;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QTextEdit {
+
+    background: #FCFDFD;
+    border: 1px solid #DCE5E0;
+    border-radius: 10px;
+    padding: 8px;
+    color: #2A3742;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QProgressBar {
+
+    background: #EEF3EF;
+    border: 1px solid #D6E1DA;
+    border-radius: 8px;
+    min-height: 14px;
+    text-align: center;
+    color: #22303B;
+}
+QWidget#PriceComparerWidget[themeMode="light"] QProgressBar::chunk {
+
+    border-radius: 7px;
+    background: #0F8A4A;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] {
+
+    background: #0E1620;
+    color: #DCE7E2;
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial;
+    font-size: 11pt;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QFrame#headerCard, QWidget#PriceComparerWidget[themeMode="dark"] QFrame#actionsCard, QWidget#PriceComparerWidget[themeMode="dark"] QFrame#tableCard, QWidget#PriceComparerWidget[themeMode="dark"] QFrame#outputCard, QWidget#PriceComparerWidget[themeMode="dark"] QFrame#logsCard {
+
+    background: #16222E;
+    border: 1px solid #263746;
+    border-radius: 12px;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QLabel#titleLabel {
+
+    color: #F2F8F5;
+    font-size: 18pt;
+    font-weight: 700;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QLabel#subtitleLabel {
+
+    color: #9CB0C0;
+    font-size: 10pt;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QLabel#outputDirLabel, QWidget#PriceComparerWidget[themeMode="dark"] QLabel#outputFileLabel {
+
+    font-weight: 600;
+    color: #E5ECE8;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QLabel#listingsLabel {
+
+    font-size: 14pt;
+    font-weight: 700;
+    color: #EAF1ED;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QLabel#logLabel {
+
+    font-size: 10pt;
+    font-weight: 600;
+    color: #97AAB9;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QLabel#outputDirValueLabel {
+
+    color: #51D08A;
+    font-weight: 600;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QPushButton {
+
+    background: #1C2A36;
+    border: 1px solid #304354;
+    border-radius: 8px;
+    padding: 7px 14px;
+    color: #E3ECE8;
+    font-size: 10pt;
+    font-weight: 600;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QPushButton:hover {
+
+    border: 1px solid #3C566D;
+    background: #223241;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QPushButton:pressed {
+
+    background: #1A2935;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QPushButton#convertBtn {
+
+    background: #3B82F6;
+    border: 1px solid #3B82F6;
+    color: #F8FAFC;
+    font-size: 11pt;
+    font-weight: 700;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QPushButton#convertBtn:hover {
+
+    background: #60A5FA;
+    border: 1px solid #60A5FA;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QPushButton#convertBtn:pressed {
+
+    background: #2563EB;
+    border: 1px solid #2563EB;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QLineEdit {
+
+    background: #101B26;
+    border: 1px solid #334959;
+    border-radius: 8px;
+    padding: 7px 10px;
+    color: #E6EEEA;
+    selection-background-color: #2C6F4B;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QLineEdit:focus {
+
+    border: 1px solid #42BF78;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QFrame#listingsTableContainer {
+
+    background: #132130;
+    border: 1px solid #30475A;
+    border-radius: 16px;
+    padding: 8px;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QTableWidget#listingsTable {
+
+    background: #101A24;
+    border: 1px solid #2D4455;
+    border-radius: 10px;
+    gridline-color: #213646;
+    alternate-background-color: #132230;
+    selection-background-color: #1E3A68;
+    selection-color: #ECF5F0;
+    color: #E3ECE8;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QTableWidget#listingsTable::item {
+
+    padding: 7px 8px;
+    border-bottom: 1px solid #213646;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QTableWidget#listingsTable::item:hover {
+
+    background: #162C4B;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QTableWidget#listingsTable::item:selected {
+
+    background: #1E3A68;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QTableWidget#listingsTable QTableCornerButton::section {
+
+    background: #1B2B38;
+    border: none;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QTableWidget#listingsTable QScrollBar:vertical {
+
+    background: #162633;
+    width: 10px;
+    margin: 2px;
+    border: none;
+    border-radius: 5px;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QTableWidget#listingsTable QScrollBar::handle:vertical {
+
+    background: #4C6376;
+    border-radius: 5px;
+    min-height: 24px;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QTableWidget#listingsTable QScrollBar::add-line:vertical, QWidget#PriceComparerWidget[themeMode="dark"] QTableWidget#listingsTable QScrollBar::sub-line:vertical {
+
+    height: 0px;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QTableWidget#listingsTable QHeaderView::section {
+
+    background: #1B2B38;
+    color: #DCE9E2;
+    border: 0;
+    border-bottom: 1px solid #2D4455;
+    padding: 8px;
+    font-weight: 700;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QTextEdit {
+
+    background: #101B26;
+    border: 1px solid #2D4353;
+    border-radius: 10px;
+    padding: 8px;
+    color: #CFE0D7;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QProgressBar {
+
+    background: #132130;
+    border: 1px solid #334A5B;
+    border-radius: 8px;
+    min-height: 14px;
+    text-align: center;
+    color: #D7E7DE;
+}
+QWidget#PriceComparerWidget[themeMode="dark"] QProgressBar::chunk {
+
+    border-radius: 7px;
+    background: #27BF6F;
+}</string>
+  </property>
+  <layout class="QVBoxLayout" name="rootLayout" stretch="0,0,0,0,0">
+   <property name="spacing">
+    <number>14</number>
+   </property>
+   <property name="leftMargin">
+    <number>18</number>
+   </property>
+   <property name="topMargin">
+    <number>18</number>
+   </property>
+   <property name="rightMargin">
+    <number>18</number>
+   </property>
+   <property name="bottomMargin">
+    <number>18</number>
+   </property>
+   <item>
+    <widget class="QFrame" name="headerCard">
+     <property name="frameShape">
+      <enum>QFrame::Shape::StyledPanel</enum>
+     </property>
+     <layout class="QVBoxLayout" name="headerLayout">
+      <property name="leftMargin">
+       <number>18</number>
+      </property>
+      <property name="topMargin">
+       <number>14</number>
+      </property>
+      <property name="rightMargin">
+       <number>18</number>
+      </property>
+      <property name="bottomMargin">
+       <number>14</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="titleLabel">
+        <property name="text">
+         <string>Price Comparator</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="subtitleLabel">
+        <property name="text">
+         <string>Add your PDFs, assign a store name, and generate a comparison Excel in one click.</string>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="actionsCard">
+     <property name="frameShape">
+      <enum>QFrame::Shape::StyledPanel</enum>
+     </property>
+     <layout class="QHBoxLayout" name="topButtonsLayout">
+      <property name="spacing">
+       <number>10</number>
+      </property>
+      <property name="leftMargin">
+       <number>16</number>
+      </property>
+      <property name="topMargin">
+       <number>12</number>
+      </property>
+      <property name="rightMargin">
+       <number>16</number>
+      </property>
+      <property name="bottomMargin">
+       <number>12</number>
+      </property>
+      <item>
+       <widget class="QPushButton" name="addPdfBtn">
+        <property name="minimumSize">
+         <size>
+          <width>130</width>
+          <height>36</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Add PDF</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="removeSelectedBtn">
+        <property name="minimumSize">
+         <size>
+          <width>150</width>
+          <height>36</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Remove Selected</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="clearBtn">
+        <property name="minimumSize">
+         <size>
+          <width>120</width>
+          <height>36</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Clear List</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="downloadRelationsBtn">
+        <property name="minimumSize">
+         <size>
+          <width>36</width>
+          <height>36</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>36</width>
+          <height>36</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Download relations sheet</string>
+        </property>
+        <property name="text">
+         <string />
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="uploadRelationsBtn">
+        <property name="minimumSize">
+         <size>
+          <width>36</width>
+          <height>36</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>36</width>
+          <height>36</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Load relations sheet</string>
+        </property>
+        <property name="text">
+         <string />
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="actionsSpacer">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="tableCard">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>150</height>
+      </size>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::Shape::StyledPanel</enum>
+     </property>
+     <layout class="QVBoxLayout" name="tableCardLayout">
+      <property name="spacing">
+       <number>8</number>
+      </property>
+      <property name="leftMargin">
+       <number>16</number>
+      </property>
+      <property name="topMargin">
+       <number>12</number>
+      </property>
+      <property name="rightMargin">
+       <number>16</number>
+      </property>
+      <property name="bottomMargin">
+       <number>16</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="listingsLabel">
+        <property name="text">
+         <string>Added Listings</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QFrame" name="listingsTableContainer">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>100</height>
+         </size>
+        </property>
+        <property name="frameShape">
+         <enum>QFrame::Shape::NoFrame</enum>
+        </property>
+        <layout class="QVBoxLayout" name="listingsTableContainerLayout">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="leftMargin">
+          <number>8</number>
+         </property>
+         <property name="topMargin">
+          <number>8</number>
+         </property>
+         <property name="rightMargin">
+          <number>8</number>
+         </property>
+         <property name="bottomMargin">
+          <number>10</number>
+         </property>
+         <item>
+          <widget class="QTableWidget" name="listingsTable">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>70</height>
+            </size>
+           </property>
+           <property name="frameShape">
+            <enum>QFrame::Shape::NoFrame</enum>
+           </property>
+           <property name="alternatingRowColors">
+            <bool>true</bool>
+           </property>
+           <property name="rowCount">
+            <number>0</number>
+           </property>
+           <property name="columnCount">
+            <number>2</number>
+           </property>
+           <column>
+            <property name="text">
+             <string>Store Name</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>PDF File</string>
+            </property>
+           </column>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="outputCard">
+     <property name="frameShape">
+      <enum>QFrame::Shape::StyledPanel</enum>
+     </property>
+     <layout class="QGridLayout" name="outputGrid">
+      <property name="leftMargin">
+       <number>16</number>
+      </property>
+      <property name="topMargin">
+       <number>12</number>
+      </property>
+      <property name="rightMargin">
+       <number>16</number>
+      </property>
+      <property name="bottomMargin">
+       <number>16</number>
+      </property>
+      <property name="horizontalSpacing">
+       <number>12</number>
+      </property>
+      <property name="verticalSpacing">
+       <number>10</number>
+      </property>
+      <item row="0" column="0">
+       <widget class="QLabel" name="outputDirLabel">
+        <property name="text">
+         <string>Output:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLabel" name="outputDirValueLabel">
+        <property name="text">
+         <string>Downloads</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="outputFileLabel">
+        <property name="text">
+         <string>Excel File Name:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="outputFileInput">
+        <property name="text">
+         <string>price_comparison.xlsx</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="progressLabel">
+        <property name="text">
+         <string>Progress: 0/0</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QProgressBar" name="progressBar">
+        <property name="value">
+         <number>0</number>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0" colspan="2">
+       <widget class="QPushButton" name="convertBtn">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>42</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Generate Comparison</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="logsCard">
+     <property name="frameShape">
+      <enum>QFrame::Shape::StyledPanel</enum>
+     </property>
+     <layout class="QVBoxLayout" name="logsLayout">
+      <property name="spacing">
+       <number>8</number>
+      </property>
+      <property name="leftMargin">
+       <number>16</number>
+      </property>
+      <property name="topMargin">
+       <number>12</number>
+      </property>
+      <property name="rightMargin">
+       <number>16</number>
+      </property>
+      <property name="bottomMargin">
+       <number>16</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="logLabel">
+        <property name="text">
+         <string>Activity</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QTextEdit" name="logOutput">
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources />
+ <connections />
+</ui>

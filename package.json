@@ -1,0 +1,23 @@
+{
+  "name": "price_comparer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Version web del comparador de precios, compilable con Vite para GitHub Pages.",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview --host"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "pdfjs-dist": "^5.6.205",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "vite": "^8.0.8"
+  }
+}

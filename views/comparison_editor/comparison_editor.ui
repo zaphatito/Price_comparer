@@ -1,0 +1,391 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ui version="4.0">
+ <class>ComparisonEditorWidget</class>
+ <widget class="QWidget" name="ComparisonEditorWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1220</width>
+    <height>760</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Comparison Editor</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget#ComparisonEditorWidget[themeMode="light"] {
+
+    background: #F4F7F5;
+    color: #1F2937;
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial;
+    font-size: 10.5pt;
+}
+QWidget#ComparisonEditorWidget[themeMode="light"] QFrame#editorCard {
+
+    background: #FFFFFF;
+    border: 1px solid #DFE8E2;
+    border-radius: 12px;
+}
+QWidget#ComparisonEditorWidget[themeMode="light"] QLabel#titleLabel {
+
+    font-size: 16pt;
+    font-weight: 700;
+    color: #0F172A;
+}
+QWidget#ComparisonEditorWidget[themeMode="light"] QLabel#subtitleLabel {
+
+    color: #4F6273;
+    font-size: 9.5pt;
+}
+QWidget#ComparisonEditorWidget[themeMode="light"] QLabel#statusLabel {
+
+    color: #355066;
+    font-size: 9.5pt;
+}
+QWidget#ComparisonEditorWidget[themeMode="light"] QTableWidget#comparisonTable {
+
+    background: #FFFFFF;
+    border: 1px solid #DCE7E1;
+    border-radius: 10px;
+    gridline-color: #E8EFEB;
+    alternate-background-color: #F7FBF8;
+    selection-background-color: #DEEAFE;
+    selection-color: #0F172A;
+}
+QWidget#ComparisonEditorWidget[themeMode="light"] QTableWidget#comparisonTable::item {
+
+    padding: 6px;
+    border-bottom: 1px solid #EDF2EF;
+}
+QWidget#ComparisonEditorWidget[themeMode="light"] QTableWidget#comparisonTable QHeaderView::section {
+
+    background: #EEF4F0;
+    color: #2B3A46;
+    border: 0;
+    border-bottom: 1px solid #DCE5E0;
+    padding: 7px;
+    font-weight: 700;
+}
+QWidget#ComparisonEditorWidget[themeMode="light"] QPushButton {
+
+    background: #FFFFFF;
+    border: 1px solid #D2DDE1;
+    border-radius: 8px;
+    padding: 7px 14px;
+    color: #22303B;
+    font-size: 10pt;
+    font-weight: 600;
+}
+QWidget#ComparisonEditorWidget[themeMode="light"] QPushButton:hover {
+
+    border: 1px solid #B8C8CF;
+    background: #F8FBF9;
+}
+QWidget#ComparisonEditorWidget[themeMode="light"] QPushButton:pressed {
+
+    background: #EEF5F1;
+}
+QWidget#ComparisonEditorWidget[themeMode="light"] QPushButton#saveBtn {
+
+    background: #2563EB;
+    border: 1px solid #2563EB;
+    color: #FFFFFF;
+    font-weight: 700;
+}
+QWidget#ComparisonEditorWidget[themeMode="light"] QPushButton#saveBtn:hover {
+
+    background: #1D4ED8;
+    border: 1px solid #1D4ED8;
+}
+QWidget#ComparisonEditorWidget[themeMode="light"] QPushButton#saveBtn:pressed {
+
+    background: #1E40AF;
+    border: 1px solid #1E40AF;
+}
+QWidget#ComparisonEditorWidget[themeMode="dark"] {
+
+    background: #0E1620;
+    color: #DCE7E2;
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial;
+    font-size: 10.5pt;
+}
+QWidget#ComparisonEditorWidget[themeMode="dark"] QFrame#editorCard {
+
+    background: #16222E;
+    border: 1px solid #263746;
+    border-radius: 12px;
+}
+QWidget#ComparisonEditorWidget[themeMode="dark"] QLabel#titleLabel {
+
+    font-size: 16pt;
+    font-weight: 700;
+    color: #F2F8F5;
+}
+QWidget#ComparisonEditorWidget[themeMode="dark"] QLabel#subtitleLabel {
+
+    color: #9CB0C0;
+    font-size: 9.5pt;
+}
+QWidget#ComparisonEditorWidget[themeMode="dark"] QLabel#statusLabel {
+
+    color: #B5C4D1;
+    font-size: 9.5pt;
+}
+QWidget#ComparisonEditorWidget[themeMode="dark"] QTableWidget#comparisonTable {
+
+    background: #101A24;
+    border: 1px solid #2D4455;
+    border-radius: 10px;
+    gridline-color: #213646;
+    alternate-background-color: #132230;
+    selection-background-color: #1E3A68;
+    selection-color: #ECF5F0;
+    color: #E3ECE8;
+}
+QWidget#ComparisonEditorWidget[themeMode="dark"] QTableWidget#comparisonTable::item {
+
+    padding: 6px;
+    border-bottom: 1px solid #213646;
+}
+QWidget#ComparisonEditorWidget[themeMode="dark"] QTableWidget#comparisonTable::item:hover {
+
+    background: #162C4B;
+}
+QWidget#ComparisonEditorWidget[themeMode="dark"] QTableWidget#comparisonTable::item:selected {
+
+    background: #1E3A68;
+}
+QWidget#ComparisonEditorWidget[themeMode="dark"] QTableWidget#comparisonTable QTableCornerButton::section {
+
+    background: #1B2B38;
+    border: none;
+}
+QWidget#ComparisonEditorWidget[themeMode="dark"] QTableWidget#comparisonTable QHeaderView::section {
+
+    background: #1B2B38;
+    color: #DCE9E2;
+    border: 0;
+    border-bottom: 1px solid #2D4455;
+    padding: 7px;
+    font-weight: 700;
+}
+QWidget#ComparisonEditorWidget[themeMode="dark"] QTableWidget#comparisonTable QScrollBar:vertical {
+
+    background: #162633;
+    width: 10px;
+    margin: 2px;
+    border: none;
+    border-radius: 5px;
+}
+QWidget#ComparisonEditorWidget[themeMode="dark"] QTableWidget#comparisonTable QScrollBar::handle:vertical {
+
+    background: #4C6376;
+    border-radius: 5px;
+    min-height: 24px;
+}
+QWidget#ComparisonEditorWidget[themeMode="dark"] QTableWidget#comparisonTable QScrollBar::add-line:vertical, QWidget#ComparisonEditorWidget[themeMode="dark"] QTableWidget#comparisonTable QScrollBar::sub-line:vertical {
+
+    height: 0px;
+}
+QWidget#ComparisonEditorWidget[themeMode="dark"] QPushButton {
+
+    background: #1C2A36;
+    border: 1px solid #304354;
+    border-radius: 8px;
+    padding: 7px 14px;
+    color: #E3ECE8;
+    font-size: 10pt;
+    font-weight: 600;
+}
+QWidget#ComparisonEditorWidget[themeMode="dark"] QPushButton:hover {
+
+    border: 1px solid #3C566D;
+    background: #223241;
+}
+QWidget#ComparisonEditorWidget[themeMode="dark"] QPushButton:pressed {
+
+    background: #1A2935;
+}
+QWidget#ComparisonEditorWidget[themeMode="dark"] QPushButton#saveBtn {
+
+    background: #3B82F6;
+    border: 1px solid #3B82F6;
+    color: #F8FAFC;
+    font-weight: 700;
+}
+QWidget#ComparisonEditorWidget[themeMode="dark"] QPushButton#saveBtn:hover {
+
+    background: #60A5FA;
+    border: 1px solid #60A5FA;
+}
+QWidget#ComparisonEditorWidget[themeMode="dark"] QPushButton#saveBtn:pressed {
+
+    background: #2563EB;
+    border: 1px solid #2563EB;
+}
+QWidget#ComparisonEditorWidget[themeMode="dark"] QComboBox {
+
+    background: #101B26;
+    border: 1px solid #334959;
+    border-radius: 7px;
+    padding: 5px 8px;
+    color: #E6EEEA;
+}
+QWidget#ComparisonEditorWidget[themeMode="dark"] QComboBox:focus {
+
+    border: 1px solid #42BF78;
+}
+QWidget#ComparisonEditorWidget[themeMode="dark"] QComboBox::drop-down {
+
+    border: none;
+    width: 18px;
+}
+QWidget#ComparisonEditorWidget[themeMode="dark"] QComboBox QAbstractItemView {
+
+    background: #162633;
+    border: 1px solid #30475A;
+    color: #E6EEEA;
+    selection-background-color: #1E3A68;
+    selection-color: #ECF5F0;
+    outline: 0;
+}</string>
+  </property>
+  <layout class="QVBoxLayout" name="rootLayout">
+   <property name="leftMargin">
+    <number>14</number>
+   </property>
+   <property name="topMargin">
+    <number>14</number>
+   </property>
+   <property name="rightMargin">
+    <number>14</number>
+   </property>
+   <property name="bottomMargin">
+    <number>14</number>
+   </property>
+   <item>
+    <widget class="QFrame" name="editorCard">
+     <property name="frameShape">
+      <enum>QFrame::Shape::StyledPanel</enum>
+     </property>
+     <layout class="QVBoxLayout" name="editorLayout">
+      <property name="spacing">
+       <number>10</number>
+      </property>
+      <property name="leftMargin">
+       <number>14</number>
+      </property>
+      <property name="topMargin">
+       <number>14</number>
+      </property>
+      <property name="rightMargin">
+       <number>14</number>
+      </property>
+      <property name="bottomMargin">
+       <number>14</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="titleLabel">
+        <property name="text">
+         <string>Comparison Matrix Editor</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="subtitleLabel">
+        <property name="text">
+         <string>Edit item relations across suppliers. Empty rows are ignored when saving.</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QTableWidget" name="comparisonTable">
+        <property name="alternatingRowColors">
+         <bool>true</bool>
+        </property>
+        <property name="selectionBehavior">
+         <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
+        </property>
+        <property name="selectionMode">
+         <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
+        </property>
+        <property name="editTriggers">
+         <set>QAbstractItemView::EditTrigger::DoubleClicked|QAbstractItemView::EditTrigger::EditKeyPressed|QAbstractItemView::EditTrigger::SelectedClicked</set>
+        </property>
+        <property name="rowCount">
+         <number>0</number>
+        </property>
+        <property name="columnCount">
+         <number>1</number>
+        </property>
+        <column>
+         <property name="text">
+          <string>Product Group</string>
+         </property>
+        </column>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="actionsLayout">
+        <property name="spacing">
+         <number>8</number>
+        </property>
+        <item>
+         <widget class="QPushButton" name="addRowBtn">
+          <property name="text">
+           <string>Add Row</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="removeRowBtn">
+          <property name="text">
+           <string>Remove Selected</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Orientation::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QLabel" name="statusLabel">
+          <property name="text">
+           <string>Ready</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="cancelBtn">
+          <property name="text">
+           <string>Cancel</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="saveBtn">
+          <property name="text">
+           <string>Save Comparisons</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources />
+ <connections />
+</ui>
