@@ -1,9 +1,7 @@
 import {
   DEFAULT_OUTPUT_FILE,
   DEFAULT_STORE_NAMES,
-  STANDARD_RELATIONS_COLUMNS,
   buildComparisonBundle,
-  buildComparisonSignature,
   buildRankingRows,
   cleanText,
   deduplicateManualRows,
@@ -19,25 +17,18 @@ import {
   rgbGradientGreenWhite,
 } from "./core.mjs";
 import pdfWorkerUrl from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
-
-const STORAGE_KEYS = {
-  priorityRelations: "price-comparer.priority-relations.v1",
-  cachedRuns: "price-comparer.generated-relations.v1",
-};
+import systemRelationsUrl from "../data/relations.xlsx?url";
 
 const state = {
   busy: false,
   fileEntries: [],
   priorityStandardRows: [],
-  cachedStandardRowsBySignature: {},
   latestResult: null,
 };
 
 const elements = {
   pickPdfBtn: document.getElementById("pickPdfBtn"),
   pdfInput: document.getElementById("pdfInput"),
-  relationsInput: document.getElementById("relationsInput"),
-  uploadRelationsBtn: document.getElementById("uploadRelationsBtn"),
   downloadRelationsBtn: document.getElementById("downloadRelationsBtn"),
   removeSelectedBtn: document.getElementById("removeSelectedBtn"),
   clearListBtn: document.getElementById("clearListBtn"),
@@ -60,6 +51,13 @@ const elements = {
 };
 
 let libraryPromise = null;
+
+const RELATIONS_EXPORT_COLUMNS = [
+  { header: "COMMON NAME", key: "nombre_producto" },
+  { header: "SYSCO", key: "nombre_sysco" },
+  { header: "KOHL", key: "nombre_kohl" },
+  { header: "US FOODS", key: "nombre_usfood" },
+];
 
 async function ensureLibraries() {
   if (!libraryPromise) {
@@ -99,7 +97,7 @@ function formatBytes(bytes) {
 }
 
 function logLine(message) {
-  const timestamp = new Date().toLocaleTimeString("es-PE", {
+  const timestamp = new Date().toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
@@ -117,7 +115,7 @@ function setProgress(done, total) {
   elements.progressBar.max = safeTotal;
   elements.progressBar.value = Math.min(done, safeTotal);
   elements.progressLabel.textContent =
-    total > 0 ? `${done} de ${total} archivos procesados` : "Listo para comenzar";
+    total > 0 ? `${done} of ${total} files processed` : "Ready to start";
 }
 
 function setBusy(isBusy) {
@@ -125,7 +123,6 @@ function setBusy(isBusy) {
   const disabled = isBusy;
   [
     elements.pickPdfBtn,
-    elements.uploadRelationsBtn,
     elements.downloadRelationsBtn,
     elements.removeSelectedBtn,
     elements.clearListBtn,
@@ -137,47 +134,36 @@ function setBusy(isBusy) {
   });
   elements.selectAllRows.disabled = disabled || state.fileEntries.length === 0;
   elements.generateBtn.textContent = isBusy
-    ? "Preparando comparativo..."
-    : "Generar comparativo";
+    ? "Preparing comparison..."
+    : "Generate comparison";
 }
 
 function updateStorageStatus() {
   const priorityCount = state.priorityStandardRows.length;
   elements.priorityStatus.textContent =
     priorityCount > 0
-      ? `${priorityCount} equivalencia${priorityCount === 1 ? "" : "s"}`
-      : "Sin equivalencias";
+      ? `${priorityCount} match${priorityCount === 1 ? "" : "es"} preloaded`
+      : "No matches available";
   elements.priorityStatus.classList.toggle("has-data", priorityCount > 0);
 }
 
-function savePriorityRelations() {
-  localStorage.setItem(STORAGE_KEYS.priorityRelations, JSON.stringify(state.priorityStandardRows));
-  updateStorageStatus();
-}
-
-function saveCachedRuns() {
-  localStorage.setItem(STORAGE_KEYS.cachedRuns, JSON.stringify(state.cachedStandardRowsBySignature));
-  updateStorageStatus();
-}
-
-function loadPersistedState() {
-  try {
-    const priorityRows = JSON.parse(localStorage.getItem(STORAGE_KEYS.priorityRelations) ?? "[]");
-    if (Array.isArray(priorityRows)) {
-      state.priorityStandardRows = priorityRows;
-    }
-  } catch {
-    state.priorityStandardRows = [];
+async function loadSystemRelations() {
+  const { XLSX } = await ensureLibraries();
+  const response = await fetch(systemRelationsUrl, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(`The saved product matches could not be loaded (${response.status}).`);
   }
-
-  try {
-    const cachedRuns = JSON.parse(localStorage.getItem(STORAGE_KEYS.cachedRuns) ?? "{}");
-    if (cachedRuns && typeof cachedRuns === "object" && !Array.isArray(cachedRuns)) {
-      state.cachedStandardRowsBySignature = cachedRuns;
-    }
-  } catch {
-    state.cachedStandardRowsBySignature = {};
+  const workbook = XLSX.read(await response.arrayBuffer(), { type: "array" });
+  const sheetName =
+    workbook.SheetNames.find((name) => name === "Relations" || name === "Cuadro_Relaciones")
+    ?? workbook.SheetNames[0];
+  if (!sheetName) {
+    throw new Error("The saved product-match workbook has no readable sheets.");
   }
+  const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "" });
+  const manualRows = relationsSheetRowsToManualRows(rows, [...DEFAULT_STORE_NAMES]);
+  state.priorityStandardRows = manualRowsToStandardRows(manualRows, [...DEFAULT_STORE_NAMES]);
+  updateStorageStatus();
 }
 
 function renderListings() {
@@ -186,7 +172,7 @@ function renderListings() {
   if (state.fileEntries.length === 0) {
     const row = document.createElement("tr");
     row.className = "empty-row";
-    row.innerHTML = '<td colspan="4">Aún no has agregado archivos.</td>';
+    row.innerHTML = '<td colspan="4">No files have been added yet.</td>';
     elements.listingRows.append(row);
     elements.selectAllRows.checked = false;
     elements.selectAllRows.disabled = true;
@@ -201,7 +187,7 @@ function renderListings() {
     checkboxCell.className = "checkbox-col";
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
-    checkbox.setAttribute("aria-label", `Seleccionar ${entry.file.name}`);
+    checkbox.setAttribute("aria-label", `Select ${entry.file.name}`);
     checkbox.checked = Boolean(entry.selected);
     checkbox.addEventListener("change", () => {
       entry.selected = checkbox.checked;
@@ -225,7 +211,7 @@ function renderListings() {
     const strong = document.createElement("strong");
     strong.textContent = entry.file.name;
     const info = document.createElement("small");
-    info.textContent = `Modificado: ${new Date(entry.file.lastModified).toLocaleDateString("es-PE")}`;
+    info.textContent = `Modified: ${new Date(entry.file.lastModified).toLocaleDateString("en-US")}`;
     fileWrap.append(strong, info);
     fileCell.append(fileWrap);
 
@@ -285,8 +271,8 @@ function addFiles(fileList) {
 
   renderListings();
   if (added > 0 || skipped > 0) {
-    logLine(`${added} PDF${added === 1 ? " agregado" : "s agregados"}${
-      skipped > 0 ? ` · ${skipped} omitido${skipped === 1 ? "" : "s"}` : ""
+    logLine(`${added} PDF${added === 1 ? " added" : "s added"}${
+      skipped > 0 ? ` · ${skipped} skipped` : ""
     }.`);
   }
 }
@@ -297,7 +283,7 @@ function removeSelectedRows() {
   const removed = before - state.fileEntries.length;
   renderListings();
   if (removed > 0) {
-    logLine(`${removed} archivo${removed === 1 ? " retirado" : "s retirados"}.`);
+    logLine(`${removed} file${removed === 1 ? " removed" : "s removed"}.`);
   }
 }
 
@@ -307,7 +293,7 @@ function clearRows() {
   }
   state.fileEntries = [];
   renderListings();
-  logLine("Se vació la lista de archivos.");
+  logLine("The file list was cleared.");
 }
 
 function collectNamedEntries() {
@@ -348,6 +334,14 @@ function gradientCssColor(ratio) {
   return `#${rgbGradientGreenWhite(ratio).slice(2)}`;
 }
 
+function toValidPrice(value) {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+  const price = Number(value);
+  return Number.isFinite(price) && price > 0 ? price : null;
+}
+
 function renderComparisonTable() {
   const latest = state.latestResult;
   if (!latest) {
@@ -368,7 +362,7 @@ function renderComparisonTable() {
 
   const headerRow = document.createElement("tr");
   const productHeader = document.createElement("th");
-  productHeader.textContent = "Producto";
+  productHeader.textContent = "Product";
   headerRow.append(productHeader);
   for (const storeName of storeColumns) {
     const th = document.createElement("th");
@@ -381,7 +375,7 @@ function renderComparisonTable() {
     const tr = document.createElement("tr");
     const td = document.createElement("td");
     td.colSpan = 1 + storeColumns.length;
-    td.textContent = "No hay productos que coincidan con el filtro.";
+    td.textContent = "No products match your search.";
     td.className = "muted";
     tr.append(td);
     elements.comparisonRows.append(tr);
@@ -395,16 +389,16 @@ function renderComparisonTable() {
     tr.append(productCell);
 
     const values = storeColumns
-      .map((storeName) => Number(row[storeName]))
-      .filter((value) => Number.isFinite(value));
+      .map((storeName) => toValidPrice(row[storeName]))
+      .filter((value) => value !== null);
     const min = values.length > 0 ? Math.min(...values) : null;
     const max = values.length > 0 ? Math.max(...values) : null;
 
     for (const storeName of storeColumns) {
       const td = document.createElement("td");
       td.className = "price-cell";
-      const price = Number(row[storeName]);
-      if (Number.isFinite(price)) {
+      const price = toValidPrice(row[storeName]);
+      if (price !== null) {
         td.textContent = formatCurrency(price);
         const ratio = min === null || max === null || max === min ? 0 : (price - min) / (max - min);
         td.style.background = gradientCssColor(ratio);
@@ -442,22 +436,23 @@ function buildLineText(items) {
   return cleanText(text);
 }
 
-function groupTextItemsIntoLines(items) {
+function groupTextItemsIntoLines(items, viewport, pdfjsLib) {
   const fragments = items
     .map((item) => {
       const text = cleanText(item.str);
+      const transformed = pdfjsLib.Util.transform(viewport.transform, item.transform);
       return {
         text,
-        x: item.transform[4],
-        y: item.transform[5],
-        width: Number(item.width ?? 0),
+        x: transformed[4],
+        y: transformed[5],
+        width: Number(item.width ?? 0) * viewport.scale,
       };
     })
     .filter((item) => item.text);
 
   fragments.sort((left, right) => {
     if (Math.abs(right.y - left.y) > 2) {
-      return right.y - left.y;
+      return left.y - right.y;
     }
     return left.x - right.x;
   });
@@ -484,6 +479,7 @@ function groupTextItemsIntoLines(items) {
     .map((line) => {
       const orderedItems = line.items.sort((left, right) => left.x - right.x);
       return {
+        y: line.y,
         items: orderedItems,
         text: buildLineText(orderedItems),
       };
@@ -503,10 +499,11 @@ async function extractPdfPages(file) {
   let previewText = "";
   for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
     const page = await pdf.getPage(pageNumber);
+    const viewport = page.getViewport({ scale: 1 });
     const textContent = await page.getTextContent();
-    const lines = groupTextItemsIntoLines(textContent.items);
+    const lines = groupTextItemsIntoLines(textContent.items, viewport, pdfjsLib);
     const text = lines.map((line) => line.text).join("\n");
-    pages.push({ lines, text });
+    pages.push({ lines, text, width: viewport.width, height: viewport.height });
     if (pageNumber <= 2) {
       previewText += `${text}\n`;
     }
@@ -533,8 +530,8 @@ function applyComparisonSheetStyles(worksheet, comparisonRows, storeColumns) {
   for (let rowIndex = 0; rowIndex < comparisonRows.length; rowIndex += 1) {
     const row = comparisonRows[rowIndex];
     const numericValues = storeColumns
-      .map((storeName) => Number(row[storeName]))
-      .filter((value) => Number.isFinite(value));
+      .map((storeName) => toValidPrice(row[storeName]))
+      .filter((value) => value !== null);
     if (numericValues.length === 0) {
       continue;
     }
@@ -543,8 +540,8 @@ function applyComparisonSheetStyles(worksheet, comparisonRows, storeColumns) {
     const max = Math.max(...numericValues);
 
     storeColumns.forEach((storeName, storeIndex) => {
-      const price = Number(row[storeName]);
-      if (!Number.isFinite(price)) {
+      const price = toValidPrice(row[storeName]);
+      if (price === null) {
         return;
       }
       const ratio = max === min ? 0 : (price - min) / (max - min);
@@ -588,7 +585,7 @@ async function exportComparisonWorkbook(comparisonRows, rankingRows, storeColumn
   comparisonRows.forEach((row) => {
     const outRow = { Product: row.Product };
     for (const storeName of storeColumns) {
-      outRow[storeName] = Number.isFinite(Number(row[storeName])) ? Number(row[storeName]) : null;
+      outRow[storeName] = toValidPrice(row[storeName]);
     }
     comparisonSheet.addRow(outRow);
   });
@@ -605,10 +602,7 @@ async function exportComparisonWorkbook(comparisonRows, rankingRows, storeColumn
   autosizeWorksheet(rankingSheet);
 
   const relationsSheet = workbook.addWorksheet("Relations");
-  relationsSheet.columns = STANDARD_RELATIONS_COLUMNS.map((columnName) => ({
-    header: columnName,
-    key: columnName,
-  }));
+  relationsSheet.columns = RELATIONS_EXPORT_COLUMNS;
   standardRelationsRows.forEach((row) => relationsSheet.addRow(row));
   relationsSheet.getRow(1).font = { bold: true };
   autosizeWorksheet(relationsSheet);
@@ -621,10 +615,7 @@ async function exportRelationsWorkbook(standardRelationsRows, filename = "relati
   const { ExcelJS } = await ensureLibraries();
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet("Relations");
-  worksheet.columns = STANDARD_RELATIONS_COLUMNS.map((columnName) => ({
-    header: columnName,
-    key: columnName,
-  }));
+  worksheet.columns = RELATIONS_EXPORT_COLUMNS;
   standardRelationsRows.forEach((row) => worksheet.addRow(row));
   worksheet.getRow(1).font = { bold: true };
   autosizeWorksheet(worksheet);
@@ -633,81 +624,36 @@ async function exportRelationsWorkbook(standardRelationsRows, filename = "relati
   await downloadWorkbook(buffer, filename);
 }
 
-function currentStoreColumnsOrDefaults() {
-  const namedEntries = collectNamedEntries();
-  if (namedEntries.length === 0) {
-    return [...DEFAULT_STORE_NAMES];
-  }
-  return namedEntries.map(({ storeName }) => storeName);
-}
-
-function loadPrioritizedManualRows(storeColumns, signature) {
-  const merged = [];
-
+function loadPrioritizedManualRows(storeColumns) {
   if (state.priorityStandardRows.length > 0) {
     const priorityRows = relationsSheetRowsToManualRows(state.priorityStandardRows, storeColumns);
-    merged.push(...priorityRows);
-    logLine(`${priorityRows.length} equivalencias guardadas disponibles.`);
+    logLine(`${priorityRows.length} preloaded product matches are ready.`);
+    return deduplicateManualRows(priorityRows);
   }
-
-  const cachedStandardRows = state.cachedStandardRowsBySignature[signature];
-  if (Array.isArray(cachedStandardRows) && cachedStandardRows.length > 0) {
-    const cachedRows = relationsSheetRowsToManualRows(cachedStandardRows, storeColumns);
-    merged.push(...cachedRows);
-    logLine(`${cachedRows.length} equivalencias recuperadas del comparativo anterior.`);
-  }
-
-  return deduplicateManualRows(merged);
+  return [];
 }
 
-async function parseRelationsFile(file) {
-  const { XLSX } = await ensureLibraries();
-  const buffer = await file.arrayBuffer();
-  const workbook = XLSX.read(buffer, { type: "array" });
-  const sheetName =
-    workbook.SheetNames.find((name) => name === "Relations" || name === "Cuadro_Relaciones") ??
-    workbook.SheetNames[0];
-
-  if (!sheetName) {
-    throw new Error("El archivo no contiene hojas legibles.");
-  }
-
-  const sheet = workbook.Sheets[sheetName];
-  return XLSX.utils.sheet_to_json(sheet, { defval: "" });
-}
-
-async function handleRelationsUpload(file) {
-  const storeColumns = currentStoreColumnsOrDefaults();
-  const rows = await parseRelationsFile(file);
-  const manualRows = relationsSheetRowsToManualRows(rows, storeColumns);
-  state.priorityStandardRows = manualRowsToStandardRows(manualRows, storeColumns);
-  savePriorityRelations();
-
-  logLine(`Equivalencias cargadas desde ${file.name}: ${state.priorityStandardRows.length}.`);
-}
-
-async function runComparison({ relationsOnly = false } = {}) {
+async function runComparison() {
   if (state.busy) {
     return;
   }
   if (state.fileEntries.length === 0) {
-    window.alert("Agrega al menos un PDF antes de continuar.");
+    window.alert("Add at least one PDF before continuing.");
     return;
   }
 
   const namedEntries = collectNamedEntries();
-  const signature = buildComparisonSignature(namedEntries);
   const storeColumns = namedEntries.map(({ storeName }) => storeName);
 
   setBusy(true);
   setProgress(0, namedEntries.length);
-  setSummary("Procesando archivos...");
-  logLine(`Procesando ${namedEntries.length} listado${namedEntries.length === 1 ? "" : "s"}.`);
+  setSummary("Processing files...");
+  logLine(`Processing ${namedEntries.length} supplier list${namedEntries.length === 1 ? "" : "s"}.`);
 
   try {
-    const manualRows = loadPrioritizedManualRows(storeColumns, signature);
+    const manualRows = loadPrioritizedManualRows(storeColumns);
     if (manualRows.length > 0) {
-      logLine(`Aplicando ${manualRows.length} equivalencias personalizadas.`);
+      logLine(`Applying ${manualRows.length} saved product matches.`);
     }
 
     const framesByStore = {};
@@ -720,22 +666,22 @@ async function runComparison({ relationsOnly = false } = {}) {
         const { items } = parseListingPdfPages(pages);
         framesByStore[storeName] = items;
         logLine(
-          `Listo: ${file.name} · ${items.length} productos${
+          `Ready: ${file.name} · ${items.length} products${
             detectedProvider ? ` · ${detectedProvider}` : ""
           }`,
         );
       } catch (error) {
-        logLine(`No se pudo procesar ${file.name}: ${error.message}`);
+        logLine(`Could not process ${file.name}: ${error.message}`);
       } finally {
         setProgress(index + 1, namedEntries.length);
       }
     }
 
     if (Object.keys(framesByStore).length === 0) {
-      throw new Error("Ningún PDF válido pudo ser procesado.");
+      throw new Error("No valid PDF could be processed.");
     }
 
-    logLine("Comparando productos equivalentes...");
+    logLine("Matching equivalent products...");
     const bundle = buildComparisonBundle(framesByStore, manualRows);
     const rankingRows = buildRankingRows(bundle.comparisonRows, bundle.storeColumns);
     const standardRelationsRows = relationsRowsToStandard(bundle.relationsRows, bundle.storeColumns);
@@ -744,49 +690,41 @@ async function runComparison({ relationsOnly = false } = {}) {
       bundle,
       rankingRows,
       standardRelationsRows,
-      signature,
     };
 
-    state.cachedStandardRowsBySignature[signature] = standardRelationsRows;
-    saveCachedRuns();
     renderResults();
 
-    if (relationsOnly) {
-      await exportRelationsWorkbook(standardRelationsRows, "relations.xlsx");
-      logLine("Plantilla de equivalencias descargada.");
-      setSummary(`${standardRelationsRows.length} equivalencias listas`);
-    } else {
-      const filename = ensureOutputFilename(elements.outputFileInput.value);
-      await exportComparisonWorkbook(
-        bundle.comparisonRows,
-        rankingRows,
-        bundle.storeColumns,
-        standardRelationsRows,
-        filename,
-      );
-      logLine(`Excel descargado: ${filename}`);
-      setSummary(
-        `${bundle.storeColumns.length} proveedor${bundle.storeColumns.length === 1 ? "" : "es"} · ${
-          bundle.comparisonRows.length
-        } productos`,
-      );
-    }
+    const filename = ensureOutputFilename(elements.outputFileInput.value);
+    await exportComparisonWorkbook(
+      bundle.comparisonRows,
+      rankingRows,
+      bundle.storeColumns,
+      standardRelationsRows,
+      filename,
+    );
+    logLine(`Excel workbook downloaded: ${filename}`);
+    setSummary(
+      `${bundle.storeColumns.length} supplier${bundle.storeColumns.length === 1 ? "" : "s"} · ${
+        bundle.comparisonRows.length
+      } products`,
+    );
   } catch (error) {
-    logLine(`No se pudo completar: ${error.message}`);
+    logLine(`The comparison could not be completed: ${error.message}`);
     window.alert(error.message);
-    setSummary("No se pudo completar");
+    setSummary("Could not complete the comparison");
   } finally {
     setBusy(false);
   }
 }
 
-async function handleDownloadRelations() {
-  if (state.fileEntries.length === 0) {
-    await exportRelationsWorkbook(state.priorityStandardRows, "relations.xlsx");
-    logLine("Plantilla de equivalencias descargada.");
-    return;
-  }
-  await runComparison({ relationsOnly: true });
+function handleDownloadRelations() {
+  const link = document.createElement("a");
+  link.href = systemRelationsUrl;
+  link.download = "relations.xlsx";
+  document.body.append(link);
+  link.click();
+  link.remove();
+  logLine("The preloaded product-match workbook was downloaded.");
 }
 
 function bindEvents() {
@@ -825,23 +763,8 @@ function bindEvents() {
     elements.logOutput.textContent = "";
   });
 
-  elements.uploadRelationsBtn.addEventListener("click", () => elements.relationsInput.click());
-  elements.relationsInput.addEventListener("change", async (event) => {
-    const [file] = [...event.target.files];
-    event.target.value = "";
-    if (!file) {
-      return;
-    }
-    try {
-      await handleRelationsUpload(file);
-    } catch (error) {
-      logLine(`No se pudieron cargar las equivalencias: ${error.message}`);
-      window.alert(error.message);
-    }
-  });
-
   elements.downloadRelationsBtn.addEventListener("click", () => {
-    void handleDownloadRelations();
+    handleDownloadRelations();
   });
   elements.generateBtn.addEventListener("click", () => {
     void runComparison();
@@ -850,21 +773,24 @@ function bindEvents() {
 }
 
 async function init() {
-  loadPersistedState();
-  updateStorageStatus();
   renderListings();
-  setBusy(false);
+  setBusy(true);
   setProgress(0, 0);
-  setSummary("Aún no hay resultados");
+  setSummary("Loading saved product matches...");
   bindEvents();
   elements.outputFileInput.value = DEFAULT_OUTPUT_FILE;
 
-  ensureLibraries()
-    .then(() => {})
-    .catch((error) => {
-      logLine(`No se pudo iniciar el lector de archivos: ${error.message}`);
-      setSummary("No se pudo iniciar");
-    });
+  try {
+    await loadSystemRelations();
+    setSummary("No results yet");
+    setBusy(false);
+  } catch (error) {
+    logLine(`The app could not load its saved product matches: ${error.message}`);
+    setSummary("Saved product matches are unavailable");
+    elements.priorityStatus.textContent = "Matches unavailable";
+    elements.generateBtn.disabled = true;
+    elements.downloadRelationsBtn.disabled = true;
+  }
 }
 
 void init();

@@ -1,19 +1,19 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Comparador de precios PDF | Price Comparator</title>
+    <title>PDF Price Comparator</title>
     <meta
       name="description"
-      content="Compara listas de precios de varios proveedores desde archivos PDF y descarga un Excel con las mejores opciones por producto."
+      content="Compare supplier price lists from PDF files and download an Excel workbook with the best price for each product."
     />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://zaphatito.github.io/Price_comparer/" />
-    <meta property="og:title" content="Comparador de precios PDF" />
+    <meta property="og:title" content="PDF Price Comparator" />
     <meta
       property="og:description"
-      content="Compara listas de proveedores y encuentra los mejores precios por producto."
+      content="Compare supplier lists and find the best price for each product."
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://zaphatito.github.io/Price_comparer/" />
@@ -23,34 +23,32 @@
       href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <script type="module" crossorigin src="./assets/index-BH_zkkzr.js"></script>
+    <script type="module" crossorigin src="./assets/index-CJpXonuD.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/chunk-DHx0Hwia.js">
     <link rel="modulepreload" crossorigin href="./assets/preload-helper-2ej06EnG.js">
     <link rel="stylesheet" crossorigin href="./assets/index-BLW_3oNN.css">
   </head>
   <body>
-    <a class="skip-link" href="#main-content">Ir al contenido principal</a>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
     <div class="page-shell">
       <header class="topbar">
-        <a class="brand" href="./" aria-label="Inicio del comparador de precios">
+        <a class="brand" href="./" aria-label="Price Comparator home">
           <span class="brand-mark" aria-hidden="true">PC</span>
-          <span>Comparador de precios</span>
+          <span>Price Comparator</span>
         </a>
         <div class="privacy-note">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M12 3 5 6v5c0 4.6 2.9 8.8 7 10 4.1-1.2 7-5.4 7-10V6l-7-3Z" />
             <path d="m9.5 12 1.7 1.7 3.7-4" />
           </svg>
-          <span>Tus archivos permanecen en este dispositivo</span>
+          <span>Your files stay on this device</span>
         </div>
       </header>
 
       <section class="intro">
-        <p class="intro-label">Simple, rápido y privado</p>
-        <h1>Encuentra el mejor precio sin revisar cada lista a mano.</h1>
-        <p>
-          Agrega los PDFs de tus proveedores y obtén un Excel con los productos comparados.
-        </p>
+        <p class="intro-label">Simple, fast, and private</p>
+        <h1>Find the best price without reviewing every list by hand.</h1>
+        <p>Add your supplier PDFs and receive an Excel workbook with matched products.</p>
       </section>
 
       <main id="main-content" class="workspace" tabindex="-1">
@@ -59,12 +57,12 @@
             <div class="section-title">
               <span class="step-badge">1</span>
               <div>
-                <h2>Agrega los listados</h2>
-                <p>Selecciona uno o más archivos PDF.</p>
+                <h2>Add supplier lists</h2>
+                <p>Select one or more PDF files.</p>
               </div>
             </div>
             <button id="pickPdfBtn" class="button button-primary" type="button">
-              Seleccionar PDFs
+              Select PDFs
             </button>
           </div>
 
@@ -75,16 +73,16 @@
                 <path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" />
               </svg>
             </span>
-            <span class="dropzone-title">Arrastra tus PDFs aquí</span>
-            <span class="dropzone-subtitle">o haz clic para buscarlos en tu equipo</span>
+            <span class="dropzone-title">Drop your PDFs here</span>
+            <span class="dropzone-subtitle">or click to browse your device</span>
           </button>
 
           <div class="list-actions">
             <div class="selection-actions">
               <button id="removeSelectedBtn" class="button button-secondary" type="button">
-                Quitar seleccionados
+                Remove selected
               </button>
-              <button id="clearListBtn" class="button button-text" type="button">Vaciar lista</button>
+              <button id="clearListBtn" class="button button-text" type="button">Clear list</button>
             </div>
           </div>
 
@@ -93,16 +91,16 @@
               <thead>
                 <tr>
                   <th class="checkbox-col">
-                    <input id="selectAllRows" type="checkbox" aria-label="Seleccionar todo" />
+                    <input id="selectAllRows" type="checkbox" aria-label="Select all files" />
                   </th>
-                  <th>Proveedor</th>
-                  <th>Archivo</th>
-                  <th>Tamaño</th>
+                  <th>Supplier</th>
+                  <th>File</th>
+                  <th>Size</th>
                 </tr>
               </thead>
               <tbody id="listingRows">
                 <tr class="empty-row">
-                  <td colspan="4">Aún no has agregado archivos.</td>
+                  <td colspan="4">No files have been added yet.</td>
                 </tr>
               </tbody>
             </table>
@@ -110,19 +108,16 @@
 
           <div class="optional-tools">
             <div class="optional-copy">
-              <span class="optional-label">Opcional</span>
+              <span class="optional-label">Included</span>
               <div>
-                <strong>Equivalencias personalizadas</strong>
-                <p>Úsalas si un mismo producto aparece con nombres diferentes.</p>
+                <strong>Preloaded product matches</strong>
+                <p>The saved equivalences are applied automatically.</p>
               </div>
             </div>
             <div class="relations-actions">
-              <span id="priorityStatus" class="status-badge">Sin equivalencias</span>
-              <button id="uploadRelationsBtn" class="button button-secondary" type="button">
-                Cargar equivalencias
-              </button>
+              <span id="priorityStatus" class="status-badge">Loading matches...</span>
               <button id="downloadRelationsBtn" class="button button-text" type="button">
-                Descargar plantilla
+                Download matches
               </button>
             </div>
           </div>
@@ -133,40 +128,40 @@
             <div class="section-title">
               <span class="step-badge">2</span>
               <div>
-                <h2>Genera el comparativo</h2>
-                <p>Revisa el nombre y comienza.</p>
+                <h2>Generate the comparison</h2>
+                <p>Review the file name and start.</p>
               </div>
             </div>
 
             <label class="field">
-              <span>Nombre del archivo</span>
+              <span>File name</span>
               <input id="outputFileInput" type="text" value="price_comparison.xlsx" />
-              <small>Se guardará en tu carpeta de descargas.</small>
+              <small>The workbook will be saved to your Downloads folder.</small>
             </label>
 
             <div class="progress-copy">
-              <span id="progressLabel">Listo para comenzar</span>
+              <span id="progressLabel">Ready to start</span>
               <strong id="summaryLabel" role="status" aria-live="polite" aria-atomic="true">
-                Sin resultados
+                No results yet
               </strong>
             </div>
             <progress id="progressBar" max="1" value="0" aria-labelledby="progressLabel"></progress>
 
             <button id="generateBtn" class="button button-primary button-large" type="button">
-              Generar comparativo
+              Generate comparison
             </button>
           </section>
 
           <details class="activity-details">
             <summary>
-              <span>Detalles del proceso</span>
-              <small>Ábrelo solo si necesitas revisar un error</small>
+              <span>Process details</span>
+              <small>Open this only if you need to review an issue</small>
             </summary>
             <div class="activity-content">
               <div class="activity-head">
-                <span>Actividad reciente</span>
+                <span>Recent activity</span>
                 <button id="clearLogBtn" class="button button-text button-small" type="button">
-                  Limpiar
+                  Clear
                 </button>
               </div>
               <div id="logOutput" class="log-output" aria-live="polite"></div>
@@ -180,21 +175,21 @@
           <div class="section-title">
             <span class="step-badge step-success">3</span>
             <div>
-              <h2>Resultado</h2>
-              <p>Consulta los mejores precios antes de abrir el Excel.</p>
+              <h2>Results</h2>
+              <p>Review the best prices before opening the Excel workbook.</p>
             </div>
           </div>
         </div>
 
         <div class="results-grid">
           <div class="result-block ranking-block">
-            <h3>Mejores precios por proveedor</h3>
+            <h3>Best prices by supplier</h3>
             <div class="table-wrap">
               <table class="preview-table">
                 <thead>
                   <tr>
-                    <th>Proveedor</th>
-                    <th>Mejores precios</th>
+                    <th>Supplier</th>
+                    <th>Best prices</th>
                   </tr>
                 </thead>
                 <tbody id="rankingRows"></tbody>
@@ -204,13 +199,13 @@
 
           <div class="result-block comparison-block">
             <div class="result-toolbar">
-              <h3>Comparación por producto</h3>
+              <h3>Product comparison</h3>
               <input
                 id="resultSearch"
                 class="search-input"
                 type="search"
-                placeholder="Buscar producto"
-                aria-label="Buscar producto"
+                placeholder="Search products"
+                aria-label="Search products"
               />
             </div>
             <div class="table-wrap wide-scroll">
@@ -225,7 +220,6 @@
     </div>
 
     <input id="pdfInput" type="file" accept=".pdf,application/pdf" multiple hidden />
-    <input id="relationsInput" type="file" accept=".xlsx,.xlsm,.xls" hidden />
 
   </body>
 </html>
