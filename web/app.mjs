@@ -643,7 +643,6 @@ async function runComparison() {
   }
 
   const namedEntries = collectNamedEntries();
-  const storeColumns = namedEntries.map(({ storeName }) => storeName);
 
   setBusy(true);
   setProgress(0, namedEntries.length);
@@ -651,12 +650,7 @@ async function runComparison() {
   logLine(`Processing ${namedEntries.length} supplier list${namedEntries.length === 1 ? "" : "s"}.`);
 
   try {
-    const manualRows = loadPrioritizedManualRows(storeColumns);
-    if (manualRows.length > 0) {
-      logLine(`Applying ${manualRows.length} saved product matches.`);
-    }
-
-    const framesByStore = {};
+    const parsedListings = [];
     for (let index = 0; index < namedEntries.length; index += 1) {
       const { file, storeName } = namedEntries[index];
       try {
@@ -664,7 +658,7 @@ async function runComparison() {
         const detectedProvider =
           detectProviderNameFromText(file.name) ?? detectProviderNameFromText(previewText);
         const { items } = parseListingPdfPages(pages);
-        framesByStore[storeName] = items;
+        parsedListings.push({ entryIndex: index, items, storeName: detectedProvider ?? storeName });
         logLine(
           `Ready: ${file.name} · ${items.length} products${
             detectedProvider ? ` · ${detectedProvider}` : ""
@@ -677,8 +671,22 @@ async function runComparison() {
       }
     }
 
-    if (Object.keys(framesByStore).length === 0) {
+    if (parsedListings.length === 0) {
       throw new Error("No valid PDF could be processed.");
+    }
+
+    const storeColumns = ensureUniqueNames(parsedListings.map(({ storeName }) => storeName));
+    const framesByStore = {};
+    parsedListings.forEach(({ entryIndex, items }, index) => {
+      const storeName = storeColumns[index];
+      framesByStore[storeName] = items;
+      state.fileEntries[entryIndex].storeName = storeName;
+    });
+    renderListings();
+
+    const manualRows = loadPrioritizedManualRows(storeColumns);
+    if (manualRows.length > 0) {
+      logLine(`Applying ${manualRows.length} saved product matches.`);
     }
 
     logLine("Matching equivalent products...");
