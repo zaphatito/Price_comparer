@@ -100,33 +100,10 @@ input[type="checkbox"] {
 .topbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   min-height: 76px;
   gap: 24px;
   border-bottom: 1px solid rgba(203, 196, 183, 0.72);
-}
-
-.brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--text);
-  font-size: 0.95rem;
-  font-weight: 800;
-  text-decoration: none;
-}
-
-.brand-mark {
-  display: grid;
-  width: 38px;
-  height: 38px;
-  place-items: center;
-  border-radius: 12px;
-  color: #fff;
-  background: var(--primary);
-  box-shadow: 0 8px 20px rgba(11, 107, 83, 0.2);
-  font-size: 0.76rem;
-  letter-spacing: -0.02em;
 }
 
 .privacy-note {
@@ -809,7 +786,6 @@ progress::-moz-progress-bar {
     min-height: 66px;
   }
 
-  .brand > span:last-child,
   .privacy-note span {
     display: none;
   }
