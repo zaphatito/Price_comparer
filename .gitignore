@@ -10,5 +10,18 @@ build_test/
 dist_test/
 instalador/output/
 
+# Local AI and agent tooling must never be published.
+CODEX.md
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+.codex/
+.agents/
+.claude/
+.cursor/
+.opencode/
+.github/skills/
+skills-lock.json
+
 .DS_Store
 Thumbs.db
