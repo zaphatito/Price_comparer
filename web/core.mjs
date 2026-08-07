@@ -373,9 +373,14 @@ function groupParsedRecords(records) {
   const valid = [];
   for (const record of records) {
     const productName = cleanText(record.product_name);
-    const price = Number(record.price);
+    const hasPrice = record.price !== null && record.price !== undefined && record.price !== "";
+    const price = hasPrice ? Number(record.price) : null;
     const productKey = normalizeKey(productName);
-    if (!productName || !productKey || !Number.isFinite(price) || price <= 0) {
+    if (
+      !productName
+      || !productKey
+      || (price !== null && (!Number.isFinite(price) || price <= 0))
+    ) {
       continue;
     }
     valid.push({ product_key: productKey, product_name: productName, price });
@@ -387,6 +392,12 @@ function groupParsedRecords(records) {
       return keyCmp;
     }
     if (left.price !== right.price) {
+      if (left.price === null) {
+        return 1;
+      }
+      if (right.price === null) {
+        return -1;
+      }
       return left.price - right.price;
     }
     return left.product_name.localeCompare(right.product_name);
@@ -395,7 +406,15 @@ function groupParsedRecords(records) {
   const grouped = new Map();
   for (const item of valid) {
     const current = grouped.get(item.product_key);
-    if (!current || item.price < current.price || (item.price === current.price && item.product_name < current.product_name)) {
+    if (
+      !current
+      || (current.price === null && item.price !== null)
+      || (
+        item.price !== null
+        && current.price !== null
+        && (item.price < current.price || (item.price === current.price && item.product_name < current.product_name))
+      )
+    ) {
       grouped.set(item.product_key, item);
     }
   }
@@ -456,7 +475,7 @@ function findTabularHeader(lines, pageHeight) {
 
   const centerY = (bestPair.product.y + bestPair.price.y) / 2;
   const headerItems = lines
-    .filter((line) => Math.abs(line.y - centerY) <= 28)
+    .filter((line) => Math.abs(line.y - centerY) <= 8)
     .flatMap((line) => line.items.map((item) => ({ ...item, y: line.y })));
   const previous = headerItems
     .filter((item) => item.endX < bestPair.product.x)
@@ -468,12 +487,47 @@ function findTabularHeader(lines, pageHeight) {
     .filter((item) => item.x > bestPair.price.endX + 8)
     .sort((left, right) => left.x - right.x)[0];
 
+  const packHeader = headerItems
+    .filter((item) => normalizeKey(item.text).includes("pack"))
+    .sort((left, right) => left.x - right.x)[0];
+  const productIdHeader =
+    headerItems.find((item) => normalizeKey(item.text).includes("upc"))
+    ?? headerItems.find((item) => normalizeKey(item.text) === "item")
+    ?? headerItems.find((item) => item.text.includes("#") && normalizeKey(item.text).includes("product"));
+
+  const columnBounds = (headerItem) => {
+    if (!headerItem) {
+      return { start: null, end: null };
+    }
+    const columnPrevious = headerItems
+      .filter((item) => item.endX < headerItem.x)
+      .sort((left, right) => right.endX - left.endX)[0];
+    const columnNext = headerItems
+      .filter((item) => item.x > headerItem.endX)
+      .sort((left, right) => left.x - right.x)[0];
+    return {
+      start: columnPrevious
+        ? (columnPrevious.endX + headerItem.x) / 2
+        : Math.max(0, headerItem.x - 40),
+      end: columnNext
+        ? (headerItem.endX + columnNext.x) / 2
+        : Number.POSITIVE_INFINITY,
+    };
+  };
+
+  const packBounds = columnBounds(packHeader);
+  const productIdBounds = columnBounds(productIdHeader);
+
   return {
     headerBottom: Math.max(...headerItems.map((item) => item.y)) + 4,
     productStart: previous ? previous.endX + 4 : Math.max(0, bestPair.product.x - 40),
     productEnd: next ? (bestPair.product.endX + next.x) / 2 : bestPair.price.x - 24,
     priceStart: bestPair.price.x - 32,
     priceEnd: afterPrice ? afterPrice.x - 6 : Number.POSITIVE_INFINITY,
+    packStart: packBounds.start,
+    packEnd: packBounds.end,
+    productIdStart: productIdBounds.start,
+    productIdEnd: productIdBounds.end,
   };
 }
 
@@ -512,15 +566,73 @@ function median(values) {
 function preferCasePrices(records) {
   const grouped = new Map();
   for (const record of records) {
-    const key = normalizeKey(record.product_name);
+    const key = cleanText(record.product_id)
+      || `${normalizeKey(record.product_name)}|${normalizeKey(record.pack_size)}`;
     const current = grouped.get(key);
     const isCase = record.price_unit === "CS";
     const currentIsCase = current?.price_unit === "CS";
-    if (!current || (isCase && !currentIsCase) || (isCase === currentIsCase && record.price < current.price)) {
+    if (!current || (isCase && !currentIsCase)) {
       grouped.set(key, record);
     }
   }
   return [...grouped.values()];
+}
+
+function disambiguateDuplicateProductNames(records) {
+  const grouped = new Map();
+  for (const record of records) {
+    const key = normalizeKey(record.product_name);
+    if (!grouped.has(key)) {
+      grouped.set(key, []);
+    }
+    grouped.get(key).push(record);
+  }
+
+  const output = [];
+  for (const group of grouped.values()) {
+    if (group.length === 1) {
+      output.push(group[0]);
+      continue;
+    }
+
+    const qualifierCounts = new Map();
+    for (const record of group) {
+      const packQualifier = cleanText(record.pack_size).replace(/^1\s+(?=\S)/, "");
+      const qualifier = packQualifier || `Item ${cleanText(record.product_id)}`;
+      qualifierCounts.set(qualifier, (qualifierCounts.get(qualifier) ?? 0) + 1);
+    }
+
+    for (const record of group) {
+      const packQualifier = cleanText(record.pack_size).replace(/^1\s+(?=\S)/, "");
+      let qualifier = packQualifier || `Item ${cleanText(record.product_id)}`;
+      if ((qualifierCounts.get(qualifier) ?? 0) > 1 && cleanText(record.product_id)) {
+        qualifier = `${qualifier} · ${cleanText(record.product_id)}`;
+      }
+      output.push({
+        ...record,
+        product_name: `${cleanText(record.product_name)} [${qualifier}]`,
+      });
+    }
+  }
+  return output;
+}
+
+function columnTextNearRow(lines, rowY, rowWindow, start, end) {
+  if (start === null || end === null) {
+    return "";
+  }
+  return cleanText(
+    lines
+      .filter((line) => Math.abs(line.y - rowY) <= rowWindow)
+      .flatMap((line) =>
+        line.items
+          .filter((item) => item.x >= start && item.x < end)
+          .map((item) => ({ text: item.text, x: item.x, y: line.y })),
+      )
+      .sort((left, right) => left.y - right.y || left.x - right.x)
+      .map((item) => item.text)
+      .join(" "),
+  );
 }
 
 function parseTabularCandidateRows(pages) {
@@ -543,6 +655,8 @@ function parseTabularCandidateRows(pages) {
       const parsedPrice = parsePriceCandidate(priceText);
       if (parsedPrice && Number.isFinite(parsedPrice.price) && parsedPrice.price > 0) {
         priceRows.push({ ...parsedPrice, y: line.y });
+      } else if (normalizeKey(priceText).includes("no price")) {
+        priceRows.push({ price: null, unit: "", y: line.y });
       }
     }
 
@@ -570,15 +684,32 @@ function parseTabularCandidateRows(pages) {
       if (!productName) {
         continue;
       }
+      const packSize = columnTextNearRow(
+        dataLines,
+        priceRow.y,
+        rowWindow,
+        header.packStart,
+        header.packEnd,
+      );
+      const productIdText = columnTextNearRow(
+        dataLines,
+        priceRow.y,
+        rowWindow,
+        header.productIdStart,
+        header.productIdEnd,
+      );
+      const productId = productIdText.match(/\b\d{5,8}\b/)?.[0] ?? "";
       records.push({
         product_name: productName,
         price: priceRow.price,
         price_unit: priceRow.unit,
+        pack_size: packSize,
+        product_id: productId,
       });
     }
   }
 
-  return groupParsedRecords(preferCasePrices(records));
+  return groupParsedRecords(disambiguateDuplicateProductNames(preferCasePrices(records)));
 }
 
 function parseSingleColumnCandidateRows(pages) {
@@ -613,7 +744,7 @@ function parseListingPdfPages(pages) {
     sourceFormat = "single-column";
   }
   if (parsed.length === 0) {
-    throw new Error("No valid products with price were found in this PDF format.");
+    throw new Error("No valid products were found in this PDF format.");
   }
   return { items: parsed, sourceFormat };
 }
@@ -796,10 +927,16 @@ function buildStoreCatalog(framesByStore) {
       .map((item) => ({
         product_key: cleanText(item.product_key).toLowerCase(),
         product_name: cleanText(item.product_name),
-        price: Number(item.price),
+        price:
+          item.price === null || item.price === undefined || item.price === ""
+            ? null
+            : Number(item.price),
       }))
       .filter(
-        (item) => item.product_key && item.product_name && Number.isFinite(item.price) && item.price > 0,
+        (item) =>
+          item.product_key
+          && item.product_name
+          && (item.price === null || (Number.isFinite(item.price) && item.price > 0)),
       );
 
     valid.sort((left, right) => {
@@ -808,6 +945,12 @@ function buildStoreCatalog(framesByStore) {
         return keyCmp;
       }
       if (left.price !== right.price) {
+        if (left.price === null) {
+          return 1;
+        }
+        if (right.price === null) {
+          return -1;
+        }
         return left.price - right.price;
       }
       return left.product_name.localeCompare(right.product_name);
@@ -816,7 +959,15 @@ function buildStoreCatalog(framesByStore) {
     const grouped = new Map();
     for (const item of valid) {
       const current = grouped.get(item.product_key);
-      if (!current || item.price < current.price || (item.price === current.price && item.product_name < current.product_name)) {
+      if (
+        !current
+        || (current.price === null && item.price !== null)
+        || (
+          item.price !== null
+          && current.price !== null
+          && (item.price < current.price || (item.price === current.price && item.product_name < current.product_name))
+        )
+      ) {
         grouped.set(item.product_key, item);
       }
     }
@@ -833,6 +984,9 @@ function clusterDisplayName(cluster) {
     }
   }
   const current = cleanText(cluster.product_name);
+  if (String(cluster.source ?? "") === "manual" && current) {
+    return current;
+  }
   if (current) {
     candidates.push(current);
   }
@@ -851,7 +1005,10 @@ function upsertClusterItem(cluster, storeName, item, score, source) {
   cluster.items_by_store[storeName] = {
     product_key: String(item.product_key),
     product_name: String(item.product_name),
-    price: Number(item.price),
+    price:
+      item.price === null || item.price === undefined || item.price === ""
+        ? null
+        : Number(item.price),
     score: Number(score),
     source,
   };
@@ -1044,7 +1201,10 @@ function clustersToRows(clusters, storeNames) {
         continue;
       }
 
-      const price = Number(item.price);
+      const price =
+        item.price === null || item.price === undefined || item.price === ""
+          ? null
+          : Number(item.price);
       const score = Number(item.score);
       comparisonRow[storeName] = price;
       relationRow.stores[storeName] = {
@@ -1372,7 +1532,7 @@ function findGroupColumn(rows) {
 
 function providerRelationsRowsToManualRows(rows, storeColumns) {
   const providerColumns = findProviderColumns(rows);
-  if (providerColumns.size < 2) {
+  if (providerColumns.size === 0) {
     return [];
   }
 
@@ -1393,7 +1553,7 @@ function providerRelationsRowsToManualRows(rows, storeColumns) {
       }
     }
 
-    if (Object.keys(stores).length < 2) {
+    if (Object.keys(stores).length === 0) {
       continue;
     }
 
@@ -1430,7 +1590,7 @@ function legacyRelationsRowsToManualRows(rows, storeColumns) {
       }
     });
 
-    if (Object.keys(stores).length < 2) {
+    if (Object.keys(stores).length === 0) {
       continue;
     }
 
@@ -1468,7 +1628,7 @@ function standardRelationsRowsToManualRows(rows, storeColumns) {
       }
     }
 
-    if (Object.keys(stores).length < 2) {
+    if (Object.keys(stores).length === 0) {
       continue;
     }
 
@@ -1511,7 +1671,7 @@ function deduplicateManualRows(rows) {
       }
     }
 
-    if (Object.keys(normalizedStores).length < 2) {
+    if (Object.keys(normalizedStores).length === 0) {
       continue;
     }
 

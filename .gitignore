@@ -9,6 +9,9 @@ dist/
 build_test/
 dist_test/
 instalador/output/
+tmp/
+outputs/
+*.inspect.ndjson
 
 # Local AI and agent tooling must never be published.
 CODEX.md

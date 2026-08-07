@@ -1,44 +1,45 @@
-# Instalador y Release
+# Installer and Release
 
-Esta carpeta contiene todo el flujo de empaquetado:
+This directory contains the complete packaging workflow:
 
-- `cambio_precios.spec`: build optimizado de PyInstaller (modo `onedir`).
-- `cambio_precios.iss`: script de Inno Setup con compresion alta.
-- `release.ps1`: pipeline completo (PyInstaller + Inno Setup).
+- `cambio_precios.spec`: optimized PyInstaller build in `onedir` mode.
+- `cambio_precios.iss`: Inno Setup script with high compression.
+- `release.ps1`: complete PyInstaller and Inno Setup pipeline.
 
-`release.ps1` aplica por defecto una poda segura para reducir tamano:
-- elimina DLLs de Qt no usadas por esta app (`QML/Quick/PDF`),
-- conserva solo traducciones base (`es/en`),
-- elimina archivos `.pdb`.
+By default, `release.ps1` safely reduces the package size:
 
-## Requisitos
+- removes Qt DLLs unused by this application (`QML/Quick/PDF`),
+- keeps only the base English and Spanish translations,
+- removes `.pdb` files.
+
+## Requirements
 
 - Windows x64
-- Python 3.13 (idealmente el `.venv` del proyecto)
-- Inno Setup 6 (con `ISCC.exe`)
+- Python 3.13, preferably from the project's `.venv`
+- Inno Setup 6 with `ISCC.exe`
 
-## Ejecutar release completo
+## Build a complete release
 
-Desde la raiz del proyecto:
+Run from the project root:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\instalador\release.ps1
 ```
 
-Con version explicita:
+Specify a version:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\instalador\release.ps1 -Version 1.0.0
 ```
 
-Flags utiles:
+Useful flags:
 
-- `-SkipDependencyInstall`: no instala/actualiza PyInstaller.
-- `-KeepBuildFolders`: no borra `build/` y `dist/` antes de compilar.
-- `-SkipQtTrim`: desactiva poda de Qt (QML/Quick/PDF + traducciones).
-- `-AggressiveQtTrim`: recorte extra (tambien elimina OpenGL por software).
+- `-SkipDependencyInstall`: do not install or update PyInstaller.
+- `-KeepBuildFolders`: keep `build/` and `dist/` before compilation.
+- `-SkipQtTrim`: disable Qt cleanup for QML, Quick, PDF, and translations.
+- `-AggressiveQtTrim`: perform additional cleanup, including software OpenGL.
 
-## Salida
+## Output
 
-- App empaquetada: `dist\CambioPrecios\`
-- Instalador final: `instalador\output\CambioPrecios-Setup-<version>.exe`
+- Packaged application: `dist\CambioPrecios\`
+- Installer: `instalador\output\CambioPrecios-Setup-<version>.exe`

@@ -319,7 +319,10 @@ def build_ranking_dataframe(
             value = row[store]
             if pd.isna(value):
                 continue
-            available_prices[store] = float(value)
+            price = float(value)
+            if price <= 0:
+                continue
+            available_prices[store] = price
 
         if not available_prices:
             continue
@@ -380,6 +383,8 @@ def apply_price_gradient(ws, price_col_idx: list[int]) -> None:
             try:
                 value = float(cell.value)
             except (TypeError, ValueError):
+                continue
+            if value <= 0:
                 continue
             parsed_row[col_idx] = value
             numeric_values.append(value)
