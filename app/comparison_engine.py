@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import re
 from dataclasses import dataclass
 from difflib import SequenceMatcher
@@ -323,32 +324,44 @@ def product_similarity(name_a: str, name_b: str) -> float:
 
 def _frame_items(frame: pd.DataFrame) -> list[dict[str, object]]:
     data = frame[["product_key", "product_name", "price"]].copy()
-    data = data.dropna(subset=["product_key", "product_name", "price"])
+    data = data.dropna(subset=["product_key", "product_name"])
     data["product_key"] = data["product_key"].map(lambda value: clean_text(value).lower())
     data["product_name"] = data["product_name"].map(clean_text)
     data = data[(data["product_key"] != "") & (data["product_name"] != "")]
     data["price"] = pd.to_numeric(data["price"], errors="coerce")
-    data = data.dropna(subset=["price"])
-    data["price"] = data["price"].astype(float)
-    data = data.sort_values(["product_key", "price", "product_name"], kind="stable")
-    grouped = data.groupby("product_key", as_index=False).agg(
-        product_name=("product_name", "first"),
-        price=("price", "min"),
+    data = data[data["price"].isna() | (data["price"] > 0)]
+    data = data.sort_values(
+        ["product_key", "price", "product_name"], kind="stable", na_position="last"
     )
-    return [
-        {
-            "product_key": str(row.product_key),
-            "product_name": str(row.product_name),
-            "price": float(row.price),
-        }
-        for row in grouped.itertuples(index=False)
-    ]
+
+    items: list[dict[str, object]] = []
+    for product_key, group in data.groupby("product_key", sort=False):
+        priced = group[group["price"].notna()]
+        row = priced.iloc[0] if not priced.empty else group.iloc[0]
+        price = None if pd.isna(row["price"]) else float(row["price"])
+        items.append(
+            {
+                "product_key": str(product_key),
+                "product_name": str(row["product_name"]),
+                "price": price,
+            }
+        )
+    return items
+
+
+def _optional_price(value: object) -> float | None:
+    if value is None or pd.isna(value):
+        return None
+    price = float(value)
+    return price if math.isfinite(price) and price > 0 else None
 
 
 def _cluster_display_name(cluster: dict[str, object]) -> str:
     items_by_store: dict[str, dict[str, object]] = cluster["items_by_store"]
     candidates = [str(item["product_name"]) for item in items_by_store.values() if item.get("product_name")]
     current = clean_text(cluster.get("product_name", ""))
+    if str(cluster.get("source", "")) == "manual" and current:
+        return current
     if current:
         candidates.append(current)
     if not candidates:
@@ -368,7 +381,7 @@ def _upsert_cluster_item(
     items_by_store[store_name] = {
         "product_key": str(item["product_key"]),
         "product_name": str(item["product_name"]),
-        "price": float(item["price"]),
+        "price": _optional_price(item.get("price")),
         "score": float(score),
         "source": source,
     }
@@ -615,7 +628,7 @@ def _clusters_to_rows(
                 continue
 
             product_value = str(item["product_name"])
-            price_value = float(item["price"])
+            price_value = _optional_price(item.get("price"))
             score_value = float(item["score"])
 
             comparison_row[store_name] = price_value

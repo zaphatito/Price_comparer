@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+import math
 from pathlib import Path
 
 from PySide6.QtCore import Qt
@@ -204,8 +205,14 @@ class ComparisonEditorDialog(QDialog):
                 price_item.setText("")
                 continue
 
-            price_value = float(selected["price"])
-            price_item.setText(f"${price_value:,.2f}")
+            raw_price = selected.get("price")
+            if raw_price is None:
+                price_item.setText("")
+                continue
+            price_value = float(raw_price)
+            price_item.setText(
+                f"${price_value:,.2f}" if math.isfinite(price_value) and price_value > 0 else ""
+            )
 
     def on_add_row(self) -> None:
         self.append_row(product_name="", selected_keys={})

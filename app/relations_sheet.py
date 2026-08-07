@@ -155,7 +155,7 @@ def _legacy_relations_df_to_manual_rows(
             if product_name:
                 stores[store_name] = product_name
 
-        if len(stores) < 2:
+        if not stores:
             continue
 
         group_name = _normalize_relation_value(row.get("Product", ""))
@@ -206,7 +206,7 @@ def _provider_relations_df_to_manual_rows(
     store_columns: list[str],
 ) -> list[dict[str, object]]:
     provider_columns = _find_provider_columns(relations_df)
-    if len(provider_columns) < 2:
+    if not provider_columns:
         return []
 
     _, provider_to_store = build_store_provider_mapping(store_columns)
@@ -223,7 +223,7 @@ def _provider_relations_df_to_manual_rows(
             if product_name:
                 stores[store_name] = product_name
 
-        if len(stores) < 2:
+        if not stores:
             continue
 
         group_name = ""
@@ -265,7 +265,7 @@ def relations_df_to_manual_rows(
                 if product_name:
                     stores[store_name] = product_name
 
-            if len(stores) < 2:
+            if not stores:
                 continue
 
             group_name = _normalize_relation_value(row.get("nombre_producto", ""))

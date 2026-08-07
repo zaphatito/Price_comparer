@@ -2,7 +2,7 @@
   "name": "price_comparer",
   "version": "1.0.0",
   "private": true,
-  "description": "Version web del comparador de precios, compilable con Vite para GitHub Pages.",
+  "description": "Browser-based supplier price comparator built with Vite for GitHub Pages.",
   "scripts": {
     "dev": "vite --host",
     "build": "vite build",
