@@ -720,6 +720,8 @@ def build_comparison_bundle(
     comparison_df = pd.DataFrame(comparison_rows)
     comparison_df = comparison_df[["product_key", "Product"] + ordered_store_names]
     comparison_df = comparison_df.sort_values("Product", kind="stable").reset_index(drop=True)
+    numeric_prices = comparison_df[ordered_store_names].apply(pd.to_numeric, errors="coerce")
+    comparison_df = comparison_df.loc[(numeric_prices > 0).any(axis=1)].reset_index(drop=True)
 
     relations_df = pd.DataFrame(relations_sheet_rows)
     relations_df = relations_df.sort_values("Product", kind="stable").reset_index(drop=True)

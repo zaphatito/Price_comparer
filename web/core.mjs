@@ -1291,11 +1291,23 @@ function buildComparisonBundle(
   }
 
   const { comparisonRows, relationRows, relationsRows } = clustersToRows(clusters, storeNames);
-  comparisonRows.sort((left, right) => String(left.Product).localeCompare(String(right.Product)));
+  const pricedComparisonRows = comparisonRows.filter((row) =>
+    storeNames.some((storeName) => {
+      const value = row[storeName];
+      return value !== null
+        && value !== undefined
+        && value !== ""
+        && Number.isFinite(Number(value))
+        && Number(value) > 0;
+    }),
+  );
+  pricedComparisonRows.sort((left, right) =>
+    String(left.Product).localeCompare(String(right.Product)),
+  );
   relationsRows.sort((left, right) => String(left.Product).localeCompare(String(right.Product)));
 
   return {
-    comparisonRows,
+    comparisonRows: pricedComparisonRows,
     relationRows,
     relationsRows,
     storeColumns: storeNames,
