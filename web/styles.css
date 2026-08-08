@@ -24,7 +24,7 @@
 }
 
 html {
-  min-width: 320px;
+  min-width: 0;
   min-height: 100%;
   background: var(--bg);
 }
@@ -32,6 +32,7 @@ html {
 body {
   min-height: 100vh;
   margin: 0;
+  overflow-x: hidden;
   color: var(--text);
   font-family: var(--font);
   background:
@@ -210,6 +211,13 @@ input[type="checkbox"] {
   gap: 14px;
 }
 
+.section-title > div,
+.optional-copy > div,
+.result-block,
+.side-stack {
+  min-width: 0;
+}
+
 .section-title h2,
 .result-block h3 {
   margin: 0;
@@ -258,6 +266,9 @@ input[type="checkbox"] {
   cursor: pointer;
   font-size: 0.84rem;
   font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  white-space: normal;
   transition: border-color 160ms ease, background 160ms ease, color 160ms ease, transform 160ms ease;
 }
 
@@ -776,31 +787,52 @@ progress::-moz-progress-bar {
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 720px),
+  (max-height: 500px) and (orientation: landscape) and (max-width: 900px) {
   .page-shell {
-    width: min(100% - 24px, 1180px);
-    padding-bottom: 32px;
+    width: 100%;
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-bottom: max(32px, env(safe-area-inset-bottom));
+    padding-left: max(12px, env(safe-area-inset-left));
   }
 
   .topbar {
-    min-height: 66px;
+    min-height: 54px;
+    padding-top: env(safe-area-inset-top);
   }
 
-  .privacy-note span {
-    display: none;
+  .privacy-note {
+    font-size: 0.72rem;
   }
 
   .intro {
-    padding: 42px 0 28px;
+    padding: 34px 4px 26px;
   }
 
   .intro h1 {
-    font-size: clamp(2rem, 11vw, 3rem);
+    max-width: 13ch;
+    font-size: clamp(2.35rem, 11.5vw, 3.25rem);
+    line-height: 0.96;
+  }
+
+  .intro > p:last-child {
+    margin-top: 16px;
+    font-size: 0.94rem;
+    line-height: 1.55;
   }
 
   .card {
-    padding: 20px;
+    padding: 18px;
     border-radius: 18px;
+  }
+
+  .button {
+    min-height: 44px;
+  }
+
+  .workspace,
+  .side-stack {
+    gap: 14px;
   }
 
   .section-head,
@@ -818,7 +850,149 @@ progress::-moz-progress-bar {
   }
 
   .dropzone {
-    min-height: 160px;
+    min-height: 148px;
+    padding: 22px 16px;
+  }
+
+  .list-actions {
+    min-height: auto;
+    margin: 12px 0;
+  }
+
+  .selection-actions {
+    display: grid;
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.7fr);
+    gap: 8px;
+  }
+
+  .selection-actions .button {
+    min-height: 44px;
+  }
+
+  .listings-wrap {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+
+  .listings-table,
+  .listings-table thead,
+  .listings-table tbody,
+  .listings-table tr,
+  .listings-table th,
+  .listings-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .listings-table thead tr {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 8px;
+  }
+
+  .listings-table thead th:not(.checkbox-col) {
+    display: none;
+  }
+
+  .listings-table thead .checkbox-col {
+    display: flex;
+    width: auto;
+    align-items: center;
+    gap: 8px;
+    padding: 0 4px;
+    border: 0;
+    background: transparent;
+  }
+
+  .listings-table thead .checkbox-col::after {
+    content: "Select all";
+    color: var(--text-soft);
+    font-size: 0.68rem;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .listings-table tbody {
+    display: grid;
+    gap: 10px;
+  }
+
+  .listings-table tbody tr:not(.empty-row) {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "check supplier size"
+      "check file file";
+    gap: 9px 10px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+  }
+
+  .listings-table tbody tr:not(.empty-row) > td {
+    min-width: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .listings-table tbody .checkbox-col {
+    display: grid;
+    width: 28px;
+    grid-area: check;
+    place-items: start center;
+    padding-top: 14px;
+  }
+
+  .listings-table tbody tr:not(.empty-row) > td:nth-child(2) {
+    grid-area: supplier;
+  }
+
+  .listings-table tbody tr:not(.empty-row) > td:nth-child(2)::before {
+    content: "Supplier";
+    display: block;
+    margin-bottom: 5px;
+    color: var(--text-faint);
+    font-size: 0.63rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .listings-table tbody tr:not(.empty-row) > td:nth-child(3) {
+    grid-area: file;
+  }
+
+  .listings-table tbody .size-cell {
+    grid-area: size;
+    align-self: end;
+    padding-bottom: 12px;
+    white-space: nowrap;
+  }
+
+  .listings-table input[type="text"] {
+    min-width: 0;
+    min-height: 42px;
+  }
+
+  .file-name {
+    min-width: 0;
+  }
+
+  .file-name strong {
+    max-width: 100%;
+  }
+
+  .empty-row {
+    border: 1px dashed var(--border-strong);
+    border-radius: 14px;
+  }
+
+  .empty-row td {
+    padding: 24px 16px;
   }
 
   .optional-copy {
@@ -838,6 +1012,103 @@ progress::-moz-progress-bar {
   th,
   td {
     padding: 11px 12px;
+  }
+
+  .wide-scroll {
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .wide-scroll .preview-table {
+    min-width: 560px;
+  }
+
+  .preview-table td:first-child,
+  .preview-table th:first-child {
+    max-width: 180px;
+  }
+
+  .results-card {
+    margin-top: 14px;
+  }
+}
+
+@media (max-width: 420px) {
+  .privacy-note span {
+    display: inline;
+  }
+
+  .section-title {
+    gap: 10px;
+  }
+
+  .section-title h2 {
+    font-size: 1.08rem;
+  }
+
+  .step-badge {
+    width: 32px;
+    height: 32px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  .optional-copy {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 360px) {
+  .page-shell {
+    padding-right: max(10px, env(safe-area-inset-right));
+    padding-left: max(10px, env(safe-area-inset-left));
+  }
+
+  .intro {
+    padding-top: 28px;
+  }
+
+  .intro h1 {
+    font-size: clamp(2.15rem, 11.5vw, 2.6rem);
+  }
+
+  .selection-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .optional-copy {
+    flex-direction: column;
+  }
+
+  .listings-table tbody tr:not(.empty-row) {
+    grid-template-columns: 24px minmax(0, 1fr);
+    grid-template-areas:
+      "check supplier"
+      "check size"
+      "check file";
+  }
+
+  .listings-table tbody .size-cell {
+    justify-self: start;
+    padding-bottom: 0;
+  }
+}
+
+@media (max-height: 500px) and (orientation: landscape) and (max-width: 900px) {
+  .topbar {
+    min-height: 44px;
+  }
+
+  .intro {
+    padding-top: 22px;
+    padding-bottom: 22px;
+  }
+
+  .intro h1 {
+    max-width: 18ch;
+    font-size: clamp(2.25rem, 7vw, 3.4rem);
   }
 }
 
